@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>📐 삼각형 미술관 - 나만의 삼각형 작품 만들기</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome 아이콘 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Jua & Noto Sans KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      background-color: #f8fafc;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    .font-jua {
+      font-family: 'Jua', sans-serif;
+    }
+    #drawingCanvas {
+      touch-action: none;
+      background-color: #ffffff;
+      cursor: crosshair;
+      display: block;
+    }
+    .tool-btn {
+      transition: all 0.15s ease-in-out;
+    }
+    .tool-btn:active {
+      transform: scale(0.94);
+    }
+    .tool-btn.active {
+      background-color: #fef08a !important;
+      border-color: #eab308 !important;
+      color: #713f12 !important;
+      box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.4);
+    }
+    .color-dot.active {
+      transform: scale(1.25);
+      box-shadow: 0 0 0 3px #4f46e5;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+
+<body class="h-screen w-screen flex flex-col select-none">
+
+  <header class="bg-indigo-600 text-white px-3 py-2 sm:px-4 sm:py-2.5 flex items-center justify-between shadow-md z-30 shrink-0 gap-2">
+    <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
+      <div class="bg-yellow-400 text-indigo-900 rounded-xl p-1.5 sm:p-2 shadow flex items-center justify-center font-bold text-base sm:text-lg">
+        📐
+      </div>
+      <div>
+        <h1 class="font-jua text-lg sm:text-2xl tracking-wide flex items-center gap-1 sm:gap-2">
+          삼각형 미술관
+          <span class="text-xs bg-indigo-800 text-yellow-300 font-normal px-2 py-0.5 rounded-full hidden md:inline-block">초등 4학년 수학</span>
+        </h1>
+      </div>
+    </div>
+
+    <!-- 학생 정보 입력 (작품 저장 시 하단에 자동 기재) -->
+    <div class="flex items-center gap-2 bg-indigo-700/80 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-indigo-500/50 text-xs sm:text-sm">
+      <div class="flex items-center gap-1">
+        <label for="studentName" class="text-indigo-200 hidden sm:inline font-medium">이름(번호):</label>
+        <input type="text" id="studentName" placeholder="내 이름(번호)" class="bg-white text-slate-900 px-2 py-1 rounded-lg w-20 sm:w-28 text-center font-bold outline-none focus:ring-2 focus:ring-yellow-400 text-xs sm:text-sm">
+      </div>
+      <div class="flex items-center gap-1">
+        <label for="artTitle" class="text-indigo-200 hidden sm:inline font-medium">작품명:</label>
+        <input type="text" id="artTitle" placeholder="작품 제목" class="bg-white text-slate-900 px-2 py-1 rounded-lg w-24 sm:w-36 text-center font-bold outline-none focus:ring-2 focus:ring-yellow-400 text-xs sm:text-sm">
+      </div>
+    </div>
+
+    <!-- 최상단 액션 버튼들 -->
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <button id="btnUndo" title="실행 취소" class="tool-btn bg-indigo-500 hover:bg-indigo-400 active:bg-indigo-700 text-white px-2.5 py-1.5 rounded-xl flex items-center gap-1 text-xs sm:text-sm font-semibold shadow-sm">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span class="hidden md:inline">되돌리기</span>
+      </button>
+      <button id="btnClear" title="전체 지우기" class="tool-btn bg-rose-500 hover:bg-rose-400 active:bg-rose-700 text-white px-2.5 py-1.5 rounded-xl flex items-center gap-1 text-xs sm:text-sm font-semibold shadow-sm">
+        <i class="fa-solid fa-trash"></i>
+        <span class="hidden md:inline">새 캔버스</span>
+      </button>
+      <button id="btnSaveImage" class="tool-btn bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white px-3 py-1.5 rounded-xl flex items-center gap-1.5 text-xs sm:text-sm font-black shadow-md border-2 border-emerald-300">
+        <i class="fa-solid fa-download"></i>
+        <span>1. 작품 저장</span>
+      </button>
+      <button id="btnOpenPadlet" class="tool-btn bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-indigo-950 px-3 py-1.5 rounded-xl flex items-center gap-1.5 text-xs sm:text-sm font-black shadow-md border border-amber-200 animate-pulse">
+        <i class="fa-solid fa-chalkboard-user"></i>
+        <span>2. 패들렛 올리기</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 flex flex-row overflow-hidden relative">
+
+    <!-- 좌측 사이드바: 1) 도형 넣기, 2) 이름표 붙이기, 3) 도안 템플릿, 4) 도형 편집기 -->
+    <aside class="w-48 sm:w-60 bg-white border-r border-slate-200 flex flex-col justify-between shadow-sm z-20 shrink-0 overflow-y-auto no-scrollbar">
+      <div class="p-2 sm:p-3 space-y-3">
+        
+        <!-- 1. 삼각형 모양 추가하기 -->
+        <div>
+          <h3 class="font-jua text-xs sm:text-sm text-indigo-900 mb-1.5 flex items-center gap-1">
+            <span class="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded text-[11px] font-bold">1</span>
+            삼각형 도형 넣기
+          </h3>
+          <div class="grid grid-cols-2 gap-1.5 text-xs">
+            <!-- 정삼각형 -->
+            <button class="shape-btn flex flex-col items-center justify-center p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-yellow-50 active:scale-95 transition" data-shape="equilateral">
+              <svg width="32" height="28" viewBox="0 0 40 36">
+                <polygon points="20,4 36,32 4,32" fill="#60a5fa" stroke="#2563eb" stroke-width="2.5"/>
+              </svg>
+              <span class="mt-1 font-bold text-slate-700 text-[11px] sm:text-xs">정삼각형</span>
+            </button>
+            <!-- 직각삼각형 -->
+            <button class="shape-btn flex flex-col items-center justify-center p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-yellow-50 active:scale-95 transition" data-shape="right">
+              <svg width="32" height="28" viewBox="0 0 40 36">
+                <polygon points="6,4 6,32 36,32" fill="#fbbf24" stroke="#d97706" stroke-width="2.5"/>
+                <path d="M6,22 L16,22 L16,32" fill="none" stroke="#b45309" stroke-width="1.5"/>
+              </svg>
+              <span class="mt-1 font-bold text-slate-700 text-[11px] sm:text-xs">직각삼각형</span>
+            </button>
+            <!-- 예각삼각형 -->
+            <button class="shape-btn flex flex-col items-center justify-center p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-yellow-50 active:scale-95 transition" data-shape="acute">
+              <svg width="32" height="28" viewBox="0 0 40 36">
+                <polygon points="14,4 36,32 4,32" fill="#f87171" stroke="#dc2626" stroke-width="2.5"/>
+              </svg>
+              <span class="mt-1 font-bold text-slate-700 text-[11px] sm:text-xs">예각삼각형</span>
+            </button>
+            <!-- 둔각삼각형 -->
+            <button class="shape-btn flex flex-col items-center justify-center p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-yellow-50 active:scale-95 transition" data-shape="obtuse">
+              <svg width="32" height="28" viewBox="0 0 40 36">
+                <polygon points="4,12 36,32 16,32" fill="#34d399" stroke="#059669" stroke-width="2.5"/>
+              </svg>
+              <span class="mt-1 font-bold text-slate-700 text-[11px] sm:text-xs">둔각삼각형</span>
+            </button>
+            <!-- 이등변삼각형 -->
+            <button class="shape-btn col-span-2 flex items-center justify-center gap-2 p-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-yellow-50 active:scale-95 transition" data-shape="isosceles">
+              <svg width="22" height="22" viewBox="0 0 32 32">
+                <polygon points="16,2 28,30 4,30" fill="#a78bfa" stroke="#7c3aed" stroke-width="2"/>
+              </svg>
+              <span class="font-bold text-slate-700 text-xs">이등변삼각형</span>
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1 text-center font-medium">💡 누르면 캔버스에 추가됩니다</p>
+        </div>
+
+        <!-- 2. 삼각형 이름표 스티커 -->
+        <div class="pt-2 border-t border-slate-200">
+          <h3 class="font-jua text-xs sm:text-sm text-indigo-900 mb-1.5 flex items-center gap-1">
+            <span class="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded text-[11px] font-bold">2</span>
+            삼각형 이름표 붙이기
+          </h3>
+          <div class="flex flex-col gap-1.5 text-xs">
+            <button class="sticker-btn text-left px-2.5 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 font-bold hover:bg-blue-100 flex items-center justify-between active:scale-95" data-tag="예각삼각형" data-color="#2563eb">
+              <span>🔵 예각삼각형</span>
+              <i class="fa-solid fa-plus text-[10px]"></i>
+            </button>
+            <button class="sticker-btn text-left px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-bold hover:bg-amber-100 flex items-center justify-between active:scale-95" data-tag="직각삼각형" data-color="#d97706">
+              <span>🟡 직각삼각형</span>
+              <i class="fa-solid fa-plus text-[10px]"></i>
+            </button>
+            <button class="sticker-btn text-left px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold hover:bg-emerald-100 flex items-center justify-between active:scale-95" data-tag="둔각삼각형" data-color="#059669">
+              <span>🟢 둔각삼각형</span>
+              <i class="fa-solid fa-plus text-[10px]"></i>
+            </button>
+            <button class="sticker-btn text-left px-2.5 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-800 font-bold hover:bg-purple-100 flex items-center justify-between active:scale-95" data-tag="정삼각형" data-color="#7c3aed">
+              <span>🟣 정삼각형</span>
+              <i class="fa-solid fa-plus text-[10px]"></i>
+            </button>
+            <button class="sticker-btn text-left px-2.5 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 font-bold hover:bg-rose-100 flex items-center justify-between active:scale-95" data-tag="이등변삼각형" data-color="#e11d48">
+              <span>🔴 이등변삼각형</span>
+              <i class="fa-solid fa-plus text-[10px]"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. 교과서 활동 밑그림 템플릿 -->
+        <div class="pt-2 border-t border-slate-200">
+          <h3 class="font-jua text-xs sm:text-sm text-indigo-900 mb-1.5 flex items-center gap-1">
+            <span class="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded text-[11px] font-bold">3</span>
+            교과서 도안 템플릿
+          </h3>
+          <div class="grid grid-cols-2 gap-1 text-xs">
+            <button class="template-btn p-1.5 rounded-lg border border-slate-200 hover:bg-indigo-50 font-bold text-slate-700 text-center active:scale-95" data-tpl="empty">
+              📄 자유 도화지
+            </button>
+            <button class="template-btn p-1.5 rounded-lg border border-slate-200 hover:bg-indigo-50 font-bold text-slate-700 text-center active:scale-95" data-tpl="butterfly">
+              🦋 나비 도안
+            </button>
+            <button class="template-btn p-1.5 rounded-lg border border-slate-200 hover:bg-indigo-50 font-bold text-slate-700 text-center active:scale-95" data-tpl="gem">
+              💎 보석 상자
+            </button>
+            <button class="template-btn p-1.5 rounded-lg border border-slate-200 hover:bg-indigo-50 font-bold text-slate-700 text-center active:scale-95" data-tpl="ship">
+              ⛵ 바다와 돛단배
+            </button>
+            <button class="template-btn col-span-2 p-1.5 rounded-lg border border-slate-200 hover:bg-indigo-50 font-bold text-slate-700 text-center active:scale-95" data-tpl="cat">
+              🐱 달과 고양이
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 선택된 도형 편집 툴박스 (사이드바 하단) -->
+      <div id="shapeEditorPanel" class="p-2.5 bg-amber-100 border-t-2 border-amber-300 hidden">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="font-bold text-xs text-amber-950 flex items-center gap-1">
+            <i class="fa-solid fa-sliders"></i> 선택한 도형 편집
+          </span>
+          <button id="btnDeleteShape" class="text-xs bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-2 py-0.5 rounded-lg font-bold">
+            <i class="fa-solid fa-trash"></i> 삭제
+          </button>
+        </div>
+        <div class="grid grid-cols-4 gap-1 text-xs">
+          <button id="btnRotateLeft" class="bg-white hover:bg-amber-50 active:bg-amber-200 p-1.5 rounded border border-amber-200 font-bold" title="왼쪽 회전">↺ 45°</button>
+          <button id="btnRotateRight" class="bg-white hover:bg-amber-50 active:bg-amber-200 p-1.5 rounded border border-amber-200 font-bold" title="오른쪽 회전">↻ 45°</button>
+          <button id="btnScaleUp" class="bg-white hover:bg-amber-50 active:bg-amber-200 p-1.5 rounded border border-amber-200 font-bold" title="확대">🔍+</button>
+          <button id="btnScaleDown" class="bg-white hover:bg-amber-50 active:bg-amber-200 p-1.5 rounded border border-amber-200 font-bold" title="축소">🔍-</button>
+        </div>
+        <div class="mt-1.5 flex items-center justify-between gap-1 text-xs">
+          <button id="btnDuplicateShape" class="w-1/2 bg-white hover:bg-amber-50 active:bg-amber-200 py-1 rounded border border-amber-200 font-bold text-slate-700">
+            <i class="fa-regular fa-copy"></i> 복제
+          </button>
+          <button id="btnBringForward" class="w-1/2 bg-white hover:bg-amber-50 active:bg-amber-200 py-1 rounded border border-amber-200 font-bold text-slate-700">
+            <i class="fa-solid fa-layer-group"></i> 맨위로
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col bg-slate-200 relative overflow-hidden">
+      
+      <!-- 상단 드로잉 툴바 -->
+      <div class="bg-white border-b border-slate-300 px-3 py-1.5 flex items-center justify-between flex-wrap gap-2 z-10 shrink-0">
+        
+        <!-- 모드 선택 도구 -->
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <button id="toolSelect" class="tool-btn active px-2.5 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1 text-slate-700">
+            <i class="fa-solid fa-arrow-pointer text-indigo-600"></i>
+            <span>도형 이동</span>
+          </button>
+          <button id="toolPen" class="tool-btn px-2.5 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1 text-slate-700">
+            <i class="fa-solid fa-pen text-rose-500"></i>
+            <span>색연필</span>
+          </button>
+          <button id="toolMarker" class="tool-btn px-2.5 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1 text-slate-700">
+            <i class="fa-solid fa-highlighter text-amber-500"></i>
+            <span>형광펜</span>
+          </button>
+          <button id="toolEraser" class="tool-btn px-2.5 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1 text-slate-700">
+            <i class="fa-solid fa-eraser text-slate-500"></i>
+            <span>지우개</span>
+          </button>
+        </div>
+
+        <!-- 색상 팔레트 -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <div class="color-dot w-6 h-6 rounded-full bg-red-500 cursor-pointer border-2 border-white shadow-sm active" data-color="#ef4444"></div>
+          <div class="color-dot w-6 h-6 rounded-full bg-orange-500 cursor-pointer border-2 border-white shadow-sm" data-color="#f97316"></div>
+          <div class="color-dot w-6 h-6 rounded-full bg-amber-400 cursor-pointer border-2 border-white shadow-sm" data-color="#fbbf24"></div>
+          <div class="color-dot w-6 h-6 rounded-full bg-emerald-500 cursor-pointer border-2 border-white shadow-sm" data-color="#10b981"></div>
+          <div class="color-dot w-6 h-6 rounded-full bg-sky-500 cursor-pointer border-2 border-white shadow-sm" data-color="#0ea5e9"></div>
+          <div class="color-dot w-6 h-6 rounded-full bg-indigo-600 cursor-pointer border-2 border-white shadow-sm" data-color="#4f46e5"></div>
+          <div class="color-dot w-6 h-6 rounded-full bg-purple-500 cursor-pointer border-2 border-white shadow-sm" data-color="#a855f7"></div>
+          <div class="color-dot w-6 h-6 rounded-full bg-pink-400 cursor-pointer border-2 border-white shadow-sm" data-color="#f472b6"></div>
+          <div class="color-dot w-6 h-6 rounded-full bg-slate-900 cursor-pointer border-2 border-white shadow-sm" data-color="#0f172a"></div>
+        </div>
+
+        <!-- 선 굵기 슬라이더 -->
+        <div class="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200 text-xs">
+          <span class="text-slate-600 font-bold">굵기:</span>
+          <input id="brushSize" type="range" min="2" max="24" value="5" class="w-16 sm:w-20 accent-indigo-600 cursor-pointer">
+          <span id="brushSizeVal" class="text-slate-800 font-black w-4 text-center">5</span>
+        </div>
+      </div>
+
+      <!-- 반응형 캔버스 뷰포트 -->
+      <div id="canvasContainer" class="flex-1 w-full h-full relative overflow-hidden bg-slate-200 flex items-center justify-center p-2 sm:p-4">
+        <canvas id="drawingCanvas" class="shadow-xl rounded-2xl border-4 border-amber-200/90 bg-white max-w-full max-h-full"></canvas>
+      </div>
+
+      <!-- 하단 상태 바 -->
+      <div class="bg-indigo-50 border-t border-indigo-100 px-3 py-1 flex items-center justify-between text-[11px] sm:text-xs text-indigo-900 shrink-0">
+        <span class="flex items-center gap-1 font-bold">
+          ✨ <strong class="text-indigo-600">도움말:</strong> 손가락이나 마우스로 도형을 이동하고, 색연필/형광펜으로 멋지게 꾸며보세요!
+        </span>
+        <span class="text-indigo-600 font-medium hidden sm:inline">예각 · 직각 · 둔각 · 정 · 이등변삼각형을 모두 찾아보세요.</span>
+      </div>
+    </div>
+  </main>
+
+  <div id="padletModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border-4 border-amber-300 transform transition-all text-left">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-jua text-xl text-indigo-900 flex items-center gap-2">
+          📌 우리 반 패들렛(Padlet) 바로가기
+        </h3>
+        <button id="btnClosePadletModal" class="text-slate-400 hover:text-slate-600 text-2xl font-bold p-1">
+          ✕
+        </button>
+      </div>
+      
+      <div class="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 mb-4 text-xs sm:text-sm text-slate-700 space-y-2">
+        <p class="font-black text-amber-900 flex items-center gap-1">
+          <span>💡</span> 패들렛 올리는 순서:
+        </p>
+        <ol class="list-decimal list-inside space-y-1 text-slate-700 font-medium">
+          <li>먼저 상단의 <strong>[1. 작품 저장]</strong>을 눌러 이미지로 저장해요.</li>
+          <li>아래 <strong>[우리 반 패들렛 열기]</strong> 버튼을 눌러 게시판으로 이동해요.</li>
+          <li>패들렛 오른쪽 아래 <strong>'+' 버튼</strong>을 누르고 방금 저장한 사진을 올려요!</li>
+        </ol>
+      </div>
+
+      <div class="space-y-2 mb-4">
+        <label class="block text-xs font-bold text-slate-700">우리 반 패들렛 주소</label>
+        <div class="flex gap-2">
+          <input type="text" id="padletUrlInput" readonly value="https://padlet.com/sjcgne/padlet-unrz1pexgkeqjnp1" class="flex-1 bg-slate-100 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 select-all outline-none">
+          <button id="btnCopyPadletUrl" class="bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white text-xs px-3 py-2 rounded-xl font-bold">
+            주소 복사
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+        <button id="btnGoToPadlet" class="flex-1 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-indigo-950 font-black py-3 rounded-2xl shadow-md flex items-center justify-center gap-2 text-sm border-2 border-amber-200">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          <span>우리 반 패들렛 열기 (바로 이동)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 토스트 알림 메시지 -->
+  <div id="toast" class="fixed bottom-12 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white px-4 py-2 rounded-xl shadow-2xl text-xs sm:text-sm font-bold z-50 transition-opacity duration-300 opacity-0 pointer-events-none flex items-center gap-2">
+    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMsg">작업이 완료되었습니다.</span>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('drawingCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('canvasContainer');
+
+    const PADLET_URL = "https://padlet.com/sjcgne/padlet-unrz1pexgkeqjnp1";
+
+    let currentTool = 'select'; // 'select', 'pen', 'marker', 'eraser'
+    let currentColor = '#ef4444';
+    let brushSize = 5;
+
+    // 캔버스 기본 논리 해상도 (비율 고정 및 고해상도 드로잉)
+    const CANVAS_WIDTH = 1200;
+    const CANVAS_HEIGHT = 850;
+
+    // 캔버스 상의 객체 (삼각형, 스티커)
+    let objects = [];
+    let selectedObject = null;
+    let isDraggingObject = false;
+    let dragOffset = { x: 0, y: 0 };
+
+    // 자유 드로잉 스트로크 레이어
+    let strokes = [];
+    let currentStroke = null;
+    let isDrawingStroke = false;
+
+    // 실행 취소(Undo) 히스토리
+    let history = [];
+    const MAX_HISTORY = 30;
+
+    // 교과서 배경 템플릿
+    let currentTemplate = 'butterfly';
+
+    function resizeCanvas() {
+      const rect = container.getBoundingClientRect();
+      const padding = 16;
+      const availWidth = Math.max(300, rect.width - padding);
+      const availHeight = Math.max(300, rect.height - padding);
+      const ratio = CANVAS_WIDTH / CANVAS_HEIGHT;
+
+      let renderWidth = availWidth;
+      let renderHeight = availWidth / ratio;
+
+      if (renderHeight > availHeight) {
+        renderHeight = availHeight;
+        renderWidth = availHeight * ratio;
+      }
+
+      canvas.width = CANVAS_WIDTH;
+      canvas.height = CANVAS_HEIGHT;
+      canvas.style.width = `${Math.floor(renderWidth)}px`;
+      canvas.style.height = `${Math.floor(renderHeight)}px`;
+
+      redrawAll();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.innerText = message;
+      toast.classList.remove('opacity-0');
+      toast.classList.add('opacity-100');
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0');
+      }, 2200);
+    }
+
+    function saveHistory() {
+      if (history.length >= MAX_HISTORY) {
+        history.shift();
+      }
+      history.push({
+        objects: JSON.parse(JSON.stringify(objects)),
+        strokes: JSON.parse(JSON.stringify(strokes)),
+        template: currentTemplate
+      });
+    }
+
+    function undo() {
+      if (history.length > 0) {
+        const prevState = history.pop();
+        objects = prevState.objects;
+        strokes = prevState.strokes;
+        currentTemplate = prevState.template;
+        selectedObject = null;
+        updateShapeEditorPanel();
+        redrawAll();
+        showToast('이전 작업으로 되돌렸습니다.');
+      } else {
+        showToast('되돌릴 이전 작업이 없습니다.');
+      }
+    }
+
+    function drawTemplateBackground(ctx) {
+      ctx.save();
+      if (currentTemplate === 'empty') {
+        // 모눈종이 격자
+        ctx.strokeStyle = '#f1f5f9';
+        ctx.lineWidth = 1;
+        const step = 40;
+        for (let x = 0; x < CANVAS_WIDTH; x += step) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, CANVAS_HEIGHT);
+          ctx.stroke();
+        }
+        for (let y = 0; y < CANVAS_HEIGHT; y += step) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(CANVAS_WIDTH, y);
+          ctx.stroke();
+        }
+      } else if (currentTemplate === 'butterfly') {
+        // 교과서 33쪽 나비 도안
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 8]);
+        
+        // 몸통 & 머리
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.ellipse(600, 430, 20, 150, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(600, 250, 35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 더듬이
+        ctx.beginPath();
+        ctx.moveTo(590, 220); ctx.quadraticCurveTo(550, 160, 530, 170);
+        ctx.moveTo(610, 220); ctx.quadraticCurveTo(650, 160, 670, 170);
+        ctx.stroke();
+
+        // 날개 분할 가이드
+        ctx.beginPath();
+        ctx.moveTo(600, 300); ctx.lineTo(960, 170); ctx.lineTo(880, 460); ctx.closePath();
+        ctx.moveTo(600, 300); ctx.lineTo(240, 170); ctx.lineTo(320, 460); ctx.closePath();
+        ctx.moveTo(600, 460); ctx.lineTo(860, 670); ctx.lineTo(650, 620); ctx.closePath();
+        ctx.moveTo(600, 460); ctx.lineTo(340, 670); ctx.lineTo(550, 620); ctx.closePath();
+        ctx.stroke();
+
+        ctx.font = 'bold 24px Jua';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.fillText('🦋 나비 날개를 여러 가지 삼각형으로 채우고 색칠해 보세요!', 600, 80);
+
+      } else if (currentTemplate === 'gem') {
+        // 교과서 33쪽 보석 상자 도안
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 8]);
+
+        ctx.beginPath();
+        ctx.moveTo(380, 260);
+        ctx.lineTo(820, 260);
+        ctx.lineTo(970, 440);
+        ctx.lineTo(600, 730);
+        ctx.lineTo(230, 440);
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(380, 260); ctx.lineTo(490, 440); ctx.lineTo(710, 440); ctx.lineTo(820, 260);
+        ctx.moveTo(490, 440); ctx.lineTo(600, 730); ctx.lineTo(710, 440);
+        ctx.stroke();
+
+        ctx.font = 'bold 24px Jua';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.fillText('💎 보석의 각 면을 예각, 직각, 둔각삼각형으로 채워보세요!', 600, 80);
+
+      } else if (currentTemplate === 'ship') {
+        // 교과서 36쪽 돛단배와 파도
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 8]);
+
+        // 파도
+        ctx.beginPath();
+        ctx.moveTo(50, 640);
+        ctx.bezierCurveTo(300, 600, 500, 680, 750, 620);
+        ctx.bezierCurveTo(900, 590, 1050, 660, 1150, 630);
+        ctx.stroke();
+
+        // 선체
+        ctx.beginPath();
+        ctx.moveTo(320, 560);
+        ctx.lineTo(880, 560);
+        ctx.lineTo(770, 690);
+        ctx.lineTo(430, 690);
+        ctx.closePath();
+        ctx.stroke();
+
+        // 돛대
+        ctx.beginPath();
+        ctx.moveTo(580, 180);
+        ctx.lineTo(580, 560);
+        ctx.stroke();
+
+        ctx.font = 'bold 24px Jua';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.fillText('⛵ 돛단배(수학호)의 돛과 깃발을 삼각형으로 완성해 보세요!', 600, 80);
+
+      } else if (currentTemplate === 'cat') {
+        // 교과서 32쪽 달과 고양이
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 8]);
+
+        // 달
+        ctx.beginPath();
+        ctx.arc(950, 200, 90, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 고양이 몸통 & 머리
+        ctx.beginPath();
+        ctx.ellipse(450, 560, 110, 150, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(450, 330, 90, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.font = 'bold 24px Jua';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.fillText('🐱 고양이의 귀, 코, 몸통을 다양한 삼각형으로 표현해 보세요!', 600, 80);
+      }
+      ctx.restore();
+    }
+
+    function renderFreehandStrokes(ctx) {
+      strokes.forEach(stroke => {
+        if (stroke.points.length < 2) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+
+        for (let i = 1; i < stroke.points.length; i++) {
+          ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        }
+
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = stroke.size;
+
+        if (stroke.tool === 'marker') {
+          ctx.strokeStyle = stroke.color;
+          ctx.globalAlpha = 0.4;
+        } else if (stroke.tool === 'eraser') {
+          ctx.strokeStyle = '#ffffff';
+          ctx.globalAlpha = 1.0;
+        } else {
+          ctx.strokeStyle = stroke.color;
+          ctx.globalAlpha = 1.0;
+        }
+
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    function renderObjects(ctx) {
+      objects.forEach(obj => {
+        ctx.save();
+        ctx.translate(obj.x, obj.y);
+        ctx.rotate((obj.rotation * Math.PI) / 180);
+        ctx.scale(obj.scale, obj.scale);
+
+        if (obj.type === 'triangle') {
+          ctx.beginPath();
+          const pts = obj.points;
+          ctx.moveTo(pts[0].x, pts[0].y);
+          ctx.lineTo(pts[1].x, pts[1].y);
+          ctx.lineTo(pts[2].x, pts[2].y);
+          ctx.closePath();
+
+          ctx.fillStyle = obj.fillColor;
+          ctx.fill();
+
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = obj.strokeColor;
+          ctx.stroke();
+
+          // 직각 표시 (직각삼각형)
+          if (obj.subType === 'right') {
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#b45309';
+            ctx.moveTo(pts[0].x + 18, pts[0].y);
+            ctx.lineTo(pts[0].x + 18, pts[0].y - 18);
+            ctx.lineTo(pts[0].x, pts[0].y - 18);
+            ctx.stroke();
+          }
+
+        } else if (obj.type === 'sticker') {
+          const padX = 14;
+          const padY = 8;
+          ctx.font = 'bold 18px Jua, Noto Sans KR';
+          const textWidth = ctx.measureText(obj.text).width;
+          const w = textWidth + padX * 2;
+          const h = 36;
+
+          // 스티커 배경
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowColor = 'rgba(0,0,0,0.15)';
+          ctx.shadowBlur = 6;
+          ctx.shadowOffsetY = 3;
+          roundRect(ctx, -w / 2, -h / 2, w, h, 12);
+          ctx.fill();
+
+          // 스티커 테두리
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetY = 0;
+          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = obj.color;
+          roundRect(ctx, -w / 2, -h / 2, w, h, 12);
+          ctx.stroke();
+
+          // 텍스트
+          ctx.fillStyle = obj.color;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(obj.text, 0, 1);
+        }
+
+        // 선택 테두리
+        if (selectedObject === obj) {
+          ctx.strokeStyle = '#4f46e5';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 6]);
+          const bounds = getObjectBoundingBox(obj);
+          ctx.strokeRect(bounds.minX - 8, bounds.minY - 8, bounds.w + 16, bounds.h + 16);
+        }
+
+        ctx.restore();
+      });
+    }
+
+    function roundRect(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function getObjectBoundingBox(obj) {
+      if (obj.type === 'triangle') {
+        const xs = obj.points.map(p => p.x);
+        const ys = obj.points.map(p => p.y);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+        return { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY };
+      } else {
+        const w = 140;
+        const h = 40;
+        return { minX: -w / 2, minY: -h / 2, maxX: w / 2, maxY: h / 2, w, h };
+      }
+    }
+
+    function redrawAll() {
+      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      drawTemplateBackground(ctx);
+      renderFreehandStrokes(ctx);
+      renderObjects(ctx);
+    }
+
+    function getCanvasPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = CANVAS_WIDTH / rect.width;
+      const scaleY = CANVAS_HEIGHT / rect.height;
+
+      let clientX, clientY;
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else if (e.changedTouches && e.changedTouches.length > 0) {
+        clientX = e.changedTouches[0].clientX;
+        clientY = e.changedTouches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
+    function isPointInObject(pos, obj) {
+      const rad = -(obj.rotation * Math.PI) / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+
+      const dx = pos.x - obj.x;
+      const dy = pos.y - obj.y;
+
+      const localX = (dx * cos - dy * sin) / obj.scale;
+      const localY = (dx * sin + dy * cos) / obj.scale;
+
+      if (obj.type === 'triangle') {
+        return isPointInTriangle({ x: localX, y: localY }, obj.points[0], obj.points[1], obj.points[2]);
+      } else if (obj.type === 'sticker') {
+        const bounds = getObjectBoundingBox(obj);
+        return localX >= bounds.minX && localX <= bounds.maxX && localY >= bounds.minY && localY <= bounds.maxY;
+      }
+      return false;
+    }
+
+    function isPointInTriangle(p, p0, p1, p2) {
+      const dX = p.x - p2.x;
+      const dY = p.y - p2.y;
+      const dX21 = p2.x - p1.x;
+      const dY12 = p1.y - p2.y;
+      const D = dY12 * (p0.x - p2.x) + dX21 * (p0.y - p2.y);
+      const s = dY12 * dX + dX21 * dY;
+      const t = (p2.y - p0.y) * dX + (p0.x - p2.x) * dY;
+      if (D < 0) return s <= 0 && t <= 0 && s + t >= D;
+      return s >= 0 && t >= 0 && s + t <= D;
+    }
+
+    function handlePointerDown(e) {
+      const pos = getCanvasPointerPos(e);
+
+      if (currentTool === 'select') {
+        let clicked = null;
+        for (let i = objects.length - 1; i >= 0; i--) {
+          if (isPointInObject(pos, objects[i])) {
+            clicked = objects[i];
+            break;
+          }
+        }
+
+        if (clicked) {
+          saveHistory();
+          selectedObject = clicked;
+          isDraggingObject = true;
+          dragOffset.x = pos.x - clicked.x;
+          dragOffset.y = pos.y - clicked.y;
+          updateShapeEditorPanel();
+          redrawAll();
+        } else {
+          selectedObject = null;
+          updateShapeEditorPanel();
+          redrawAll();
+        }
+      } else {
+        saveHistory();
+        isDrawingStroke = true;
+        currentStroke = {
+          tool: currentTool,
+          color: currentColor,
+          size: brushSize,
+          points: [pos]
+        };
+        strokes.push(currentStroke);
+        redrawAll();
+      }
+    }
+
+    function handlePointerMove(e) {
+      if (!isDraggingObject && !isDrawingStroke) return;
+
+      const pos = getCanvasPointerPos(e);
+
+      if (currentTool === 'select' && isDraggingObject && selectedObject) {
+        selectedObject.x = pos.x - dragOffset.x;
+        selectedObject.y = pos.y - dragOffset.y;
+        redrawAll();
+      } else if (isDrawingStroke && currentStroke) {
+        currentStroke.points.push(pos);
+        redrawAll();
+      }
+    }
+
+    function handlePointerUp() {
+      if (isDraggingObject) {
+        isDraggingObject = false;
+      }
+      if (isDrawingStroke) {
+        isDrawingStroke = false;
+        currentStroke = null;
+      }
+    }
+
+    // 마우스 이벤트 등록
+    canvas.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+
+    // 태블릿 터치 이벤트 등록 (갤럭시 탭 A6 스크롤 밀림 방지)
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      handlePointerDown(e);
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (e) => {
+      if (isDraggingObject || isDrawingStroke) {
+        e.preventDefault();
+      }
+      handlePointerMove(e);
+    }, { passive: false });
+
+    window.addEventListener('touchend', handlePointerUp);
+
+    function addTriangle(type) {
+      saveHistory();
+      const centerX = CANVAS_WIDTH / 2 + (Math.random() * 80 - 40);
+      const centerY = CANVAS_HEIGHT / 2 + (Math.random() * 80 - 40);
+      let points = [];
+      let strokeColor = '#2563eb';
+      let fillColor = '#93c5fd';
+
+      if (type === 'equilateral') {
+        // 정삼각형
+        const h = 130 * (Math.sqrt(3) / 2);
+        points = [
+          { x: 0, y: -h * (2 / 3) },
+          { x: 65, y: h * (1 / 3) },
+          { x: -65, y: h * (1 / 3) }
+        ];
+        strokeColor = '#2563eb';
+        fillColor = '#bfdbfe';
+      } else if (type === 'right') {
+        // 직각삼각형
+        points = [
+          { x: -60, y: 55 },
+          { x: -60, y: -75 },
+          { x: 65, y: 55 }
+        ];
+        strokeColor = '#d97706';
+        fillColor = '#fde68a';
+      } else if (type === 'acute') {
+        // 예각삼각형
+        points = [
+          { x: -15, y: -70 },
+          { x: 70, y: 60 },
+          { x: -70, y: 60 }
+        ];
+        strokeColor = '#dc2626';
+        fillColor = '#fecaca';
+      } else if (type === 'obtuse') {
+        // 둔각삼각형
+        points = [
+          { x: -80, y: -20 },
+          { x: 80, y: 55 },
+          { x: 0, y: 55 }
+        ];
+        strokeColor = '#059669';
+        fillColor = '#a7f3d0';
+      } else if (type === 'isosceles') {
+        // 이등변삼각형
+        points = [
+          { x: 0, y: -80 },
+          { x: 55, y: 60 },
+          { x: -55, y: 60 }
+        ];
+        strokeColor = '#7c3aed';
+        fillColor = '#ddd6fe';
+      }
+
+      const newObj = {
+        type: 'triangle',
+        subType: type,
+        x: centerX,
+        y: centerY,
+        rotation: 0,
+        scale: 1.0,
+        points: points,
+        fillColor: fillColor,
+        strokeColor: strokeColor
+      };
+
+      objects.push(newObj);
+      selectedObject = newObj;
+      setTool('select');
+      updateShapeEditorPanel();
+      redrawAll();
+      showToast('삼각형 도형이 추가되었습니다!');
+    }
+
+    function addSticker(tag, color) {
+      saveHistory();
+      const newObj = {
+        type: 'sticker',
+        text: tag,
+        color: color,
+        x: CANVAS_WIDTH / 2 + (Math.random() * 60 - 30),
+        y: CANVAS_HEIGHT / 2 + (Math.random() * 60 - 30),
+        rotation: 0,
+        scale: 1.0
+      };
+      objects.push(newObj);
+      selectedObject = newObj;
+      setTool('select');
+      updateShapeEditorPanel();
+      redrawAll();
+      showToast(`🏷️ "${tag}" 이름표 스티커 추가!`);
+    }
+
+    function updateShapeEditorPanel() {
+      const panel = document.getElementById('shapeEditorPanel');
+      if (selectedObject) {
+        panel.classList.remove('hidden');
+      } else {
+        panel.classList.add('hidden');
+      }
+    }
+
+    function setTool(toolName) {
+      currentTool = toolName;
+      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+      if (toolName === 'select') document.getElementById('toolSelect').classList.add('active');
+      if (toolName === 'pen') document.getElementById('toolPen').classList.add('active');
+      if (toolName === 'marker') document.getElementById('toolMarker').classList.add('active');
+      if (toolName === 'eraser') document.getElementById('toolEraser').classList.add('active');
+    }
+
+    document.getElementById('toolSelect').addEventListener('click', () => setTool('select'));
+    document.getElementById('toolPen').addEventListener('click', () => setTool('pen'));
+    document.getElementById('toolMarker').addEventListener('click', () => setTool('marker'));
+    document.getElementById('toolEraser').addEventListener('click', () => setTool('eraser'));
+
+    // 도형 버튼
+    document.querySelectorAll('.shape-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const shape = btn.getAttribute('data-shape');
+        addTriangle(shape);
+      });
+    });
+
+    // 스티커 버튼
+    document.querySelectorAll('.sticker-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tag = btn.getAttribute('data-tag');
+        const color = btn.getAttribute('data-color');
+        addSticker(tag, color);
+      });
+    });
+
+    // 템플릿 버튼
+    document.querySelectorAll('.template-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        saveHistory();
+        currentTemplate = btn.getAttribute('data-tpl');
+        redrawAll();
+        showToast('도안 템플릿이 변경되었습니다.');
+      });
+    });
+
+    // 팔레트 색상 선택
+    document.querySelectorAll('.color-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+        dot.classList.add('active');
+        currentColor = dot.getAttribute('data-color');
+
+        if (selectedObject && selectedObject.type === 'triangle') {
+          saveHistory();
+          selectedObject.fillColor = currentColor;
+          redrawAll();
+        }
+      });
+    });
+
+    // 브러시 굵기 조절
+    const brushInput = document.getElementById('brushSize');
+    const brushVal = document.getElementById('brushSizeVal');
+    brushInput.addEventListener('input', (e) => {
+      brushSize = parseInt(e.target.value);
+      brushVal.innerText = brushSize;
+    });
+
+    // 도형 회전/확대/복제/삭제
+    document.getElementById('btnRotateLeft').addEventListener('click', () => {
+      if (selectedObject) {
+        saveHistory();
+        selectedObject.rotation = (selectedObject.rotation - 45 + 360) % 360;
+        redrawAll();
+      }
+    });
+
+    document.getElementById('btnRotateRight').addEventListener('click', () => {
+      if (selectedObject) {
+        saveHistory();
+        selectedObject.rotation = (selectedObject.rotation + 45) % 360;
+        redrawAll();
+      }
+    });
+
+    document.getElementById('btnScaleUp').addEventListener('click', () => {
+      if (selectedObject) {
+        saveHistory();
+        selectedObject.scale = Math.min(selectedObject.scale + 0.15, 3.0);
+        redrawAll();
+      }
+    });
+
+    document.getElementById('btnScaleDown').addEventListener('click', () => {
+      if (selectedObject) {
+        saveHistory();
+        selectedObject.scale = Math.max(selectedObject.scale - 0.15, 0.4);
+        redrawAll();
+      }
+    });
+
+    document.getElementById('btnDuplicateShape').addEventListener('click', () => {
+      if (selectedObject) {
+        saveHistory();
+        const clone = JSON.parse(JSON.stringify(selectedObject));
+        clone.x += 30;
+        clone.y += 30;
+        objects.push(clone);
+        selectedObject = clone;
+        redrawAll();
+        showToast('도형이 복제되었습니다.');
+      }
+    });
+
+    document.getElementById('btnBringForward').addEventListener('click', () => {
+      if (selectedObject) {
+        saveHistory();
+        const idx = objects.indexOf(selectedObject);
+        if (idx > -1 && idx < objects.length - 1) {
+          objects.splice(idx, 1);
+          objects.push(selectedObject);
+          redrawAll();
+        }
+      }
+    });
+
+    document.getElementById('btnDeleteShape').addEventListener('click', () => {
+      if (selectedObject) {
+        saveHistory();
+        objects = objects.filter(o => o !== selectedObject);
+        selectedObject = null;
+        updateShapeEditorPanel();
+        redrawAll();
+        showToast('도형이 삭제되었습니다.');
+      }
+    });
+
+    // 되돌리기 & 캔버스 초기화
+    document.getElementById('btnUndo').addEventListener('click', undo);
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      if (objects.length > 0 || strokes.length > 0) {
+        saveHistory();
+        objects = [];
+        strokes = [];
+        selectedObject = null;
+        updateShapeEditorPanel();
+        redrawAll();
+        showToast('도화지를 깨끗하게 비웠습니다.');
+      }
+    });
+
+    document.getElementById('btnSaveImage').addEventListener('click', () => {
+      selectedObject = null;
+      redrawAll();
+
+      const name = document.getElementById('studentName').value.trim() || '4학년 작가';
+      const title = document.getElementById('artTitle').value.trim() || '삼각형 미술 작품';
+      const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      // 금색 액자 프레임이 적용된 고화질 저장용 캔버스 합성
+      const exportCanvas = document.createElement('canvas');
+      const exCtx = exportCanvas.getContext('2d');
+      const margin = 40;
+      const footerH = 90;
+
+      exportCanvas.width = CANVAS_WIDTH + margin * 2;
+      exportCanvas.height = CANVAS_HEIGHT + margin * 2 + footerH;
+
+      // 외곽 배경 프레임
+      exCtx.fillStyle = '#fef3c7';
+      exCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+      // 액자 테두리
+      exCtx.strokeStyle = '#d97706';
+      exCtx.lineWidth = 6;
+      exCtx.strokeRect(16, 16, exportCanvas.width - 32, exportCanvas.height - 32);
+
+      // 캔버스 드로잉 본문 합성
+      exCtx.drawImage(canvas, margin, margin);
+
+      // 작품 서명 및 정보 기재
+      exCtx.fillStyle = '#1e1b4b';
+      exCtx.font = 'bold 30px Jua';
+      exCtx.textAlign = 'left';
+      exCtx.fillText(`🖼️ [작품명] ${title}`, margin + 10, CANVAS_HEIGHT + margin + 45);
+
+      exCtx.font = 'bold 22px Noto Sans KR';
+      exCtx.fillStyle = '#4338ca';
+      exCtx.textAlign = 'right';
+      exCtx.fillText(`작가: ${name}  |  ${today}`, exportCanvas.width - margin - 10, CANVAS_HEIGHT + margin + 45);
+
+      // 이미지 파일 다운로드
+      const dataUrl = exportCanvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.download = `삼각형미술관_${name}_${title}.png`;
+      a.href = dataUrl;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      showToast('🎉 멋진 작품이 저장되었습니다! 이제 패들렛에 올려보세요.');
+    });
+
+    // 패들렛 모달 제어
+    const padletModal = document.getElementById('padletModal');
+    const padletUrlInput = document.getElementById('padletUrlInput');
+    padletUrlInput.value = PADLET_URL;
+
+    document.getElementById('btnOpenPadlet').addEventListener('click', () => {
+      padletModal.classList.remove('hidden');
+    });
+
+    document.getElementById('btnClosePadletModal').addEventListener('click', () => {
+      padletModal.classList.add('hidden');
+    });
+
+    document.getElementById('btnCopyPadletUrl').addEventListener('click', () => {
+      padletUrlInput.select();
+      document.execCommand('copy');
+      showToast('📋 패들렛 주소가 복사되었습니다!');
+    });
+
+    document.getElementById('btnGoToPadlet').addEventListener('click', () => {
+      window.open(PADLET_URL, '_blank');
+      padletModal.classList.add('hidden');
+    });
+
+    window.addEventListener('load', () => {
+      resizeCanvas();
+    });
+    // DOM 로드 즉시 1차 초기화
+    setTimeout(resizeCanvas, 50);
+  </script>
+</body>
+</html>
