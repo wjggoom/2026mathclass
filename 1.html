@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>삼각 보물섬 대결 v6</title>
+<style>
+  :root{
+    --ink:#16324a; --muted:#6b7f90; --line:#d8e8ef;
+    --p1:#5c9ded; --p2:#ff8a65; --accent:#16b3a3; --bg:#eef9fb;
+    --good:#169873; --bad:#c84d64;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:system-ui,-apple-system,"Noto Sans KR","Apple SD Gothic Neo",sans-serif;color:var(--ink);background:var(--bg)}
+  button,input{font:inherit}
+  button{touch-action:manipulation}
+  .app{min-height:100%;display:grid;grid-template-rows:auto 1fr}
+  header{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:9px 12px;background:#fff;border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:10
+  }
+  h1{font-size:clamp(18px,2.6vw,26px);margin:0;letter-spacing:-.03em}
+  .sub{font-size:12px;color:var(--muted);margin-top:3px}
+  .headBtns{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{
+    border:0;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;
+    background:#e8f6f7;color:#0d6e75
+  }
+  .btn.primary{background:#7fcfc6;color:#fff}
+  .btn.warn{background:#fff1ea;color:#b64f2d}
+  .btn.ghost{background:#eef2f4;color:#476172}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .layout{
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(270px,320px);
+    gap:10px;padding:10px;min-height:calc(100svh - 68px);align-items:start
+  }
+  .boardWrap{
+    position:relative;background:#fff;border-radius:22px;overflow:hidden;
+    box-shadow:0 8px 24px #2f71831a;min-height:540px
+  }
+  svg{width:100%;height:100%;display:block;touch-action:none;background:
+      radial-gradient(circle at 15% 8%,#fff7c9 0 2%,transparent 2.2%),
+      radial-gradient(circle at 88% 18%,#d8f7ff 0 2.5%,transparent 2.7%),
+      linear-gradient(#fbffff,#f6fcf8)}
+
+  .side{display:flex;flex-direction:column;gap:10px;min-height:0}
+  .card{background:#fff;border-radius:18px;padding:12px;box-shadow:0 6px 18px #2f718314}
+  .scoreRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .score{
+    padding:10px;border-radius:14px;background:#f4f8ff;border:2px solid #d2e3ff;text-align:center
+  }
+  .score.p2{background:#fff7f4;border-color:#ffd8cb}
+  .score b{display:block;font-size:24px;margin-top:1px}
+  .gainCard{text-align:center;padding:10px 12px}
+  .gainLabel{font-size:14px;font-weight:900;color:#6b7f90}
+  .gainValue{font-size:30px;font-weight:1000;line-height:1.2;margin-top:3px;color:#16324a}
+  .gainValue.good{color:#169873}
+  .gainValue.bad{color:#9aa8b1}
+  .hint{font-size:12px;color:var(--muted);line-height:1.45}
+  .controlCol{display:flex;flex-direction:column;gap:8px}
+  .bigBtn{width:100%;padding:12px 14px;font-size:19px}
+  .btnRow{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+
+  .missionCard{
+    background:#fff;border-radius:24px;padding:14px;border:4px solid var(--p1);
+    box-shadow:0 8px 24px #16324a12;text-align:center;
+  }
+  .missionCard.p2{border-color:var(--p2)}
+  .missionTurn{
+    font-size:18px;font-weight:1000;color:var(--ink);margin-bottom:8px;
+  }
+  .rollInsideBtn{
+    width:100%;border:0;border-radius:16px;padding:14px 12px;
+    font-weight:1000;font-size:22px;cursor:pointer;
+    background:#ffb000;color:#17324a;box-shadow:inset 0 -3px 0 #de9500;
+    margin-bottom:10px
+  }
+  .rollInsideBtn:disabled{opacity:.45;cursor:not-allowed}
+  .missionName{
+    font-size:clamp(28px,2.8vw,40px);font-weight:1000;letter-spacing:-.04em;
+    line-height:1.08;margin:2px 0 4px
+  }
+  .missionDesc{
+    font-size:16px;font-weight:900;color:#456071;line-height:1.3;
+  }
+  .rollingBox{
+    display:none;align-items:center;justify-content:center;gap:10px;
+    color:#2f6f73;font-size:17px;font-weight:1000;margin-bottom:8px
+  }
+  .rollingBox.show{display:flex}
+  .diceSpin{
+    display:inline-block;font-size:24px;animation:spin .8s linear infinite;
+  }
+  @keyframes spin{
+    from{transform:rotate(0deg)}
+    to{transform:rotate(360deg)}
+  }
+
+  .rules{font-size:15px;line-height:1.6;color:#435b6e}
+  .rules ol{padding-left:20px;margin:7px 0 0}
+  .small{font-size:12px;color:var(--muted)}
+  .modal{
+    position:fixed;inset:0;background:#16324aaa;display:none;align-items:center;justify-content:center;
+    z-index:50;padding:18px
+  }
+  .modal.show{display:flex}
+  .modalBox{
+    max-width:700px;width:100%;background:#fff;border-radius:24px;padding:22px;
+    box-shadow:0 24px 60px #0003
+  }
+  .modalBox h2{margin:0 0 12px;font-size:26px}
+  .modeSelect{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 14px}
+  .modeCard{
+    padding:16px;border-radius:18px;border:2px solid #d8e8ef;background:#f8fcfc;cursor:pointer;
+    text-align:center;font-weight:900
+  }
+  .modeCard.active{border-color:#20a7ab;background:#ecfbfb;color:#0d6e75}
+  .settingGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field{padding:12px;border-radius:14px;background:#f5fafb}
+  .field label{display:block;font-size:13px;font-weight:800;margin-bottom:6px}
+  input{width:100%;padding:10px;border:1px solid #ccdce4;border-radius:10px;background:#fff}
+  .modalActions{display:flex;gap:8px;justify-content:flex-end;margin-top:15px}
+  .hidden{display:none !important}
+
+  @media(max-width:1024px){
+    .layout{grid-template-columns:minmax(0,1fr) minmax(255px,300px);gap:8px;padding:8px;min-height:calc(100svh - 60px)}
+    .boardWrap{min-height:500px}
+    .side{gap:8px}
+    .missionCard{padding:12px}
+    .rollInsideBtn{padding:12px 10px;font-size:20px}
+    .missionName{font-size:30px}
+    .missionDesc{font-size:15px}
+  }
+  @media(max-width:900px){
+    .layout{grid-template-columns:1fr;grid-template-rows:minmax(56vh,1fr) auto}
+    .boardWrap{min-height:56vh}
+    .side{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .missionCard{grid-column:1/-1}
+  }
+  @media(max-width:620px){
+    header{padding:8px 10px}
+    .sub{display:none}
+    .layout{padding:6px;gap:6px}
+    .side{display:flex}
+    .boardWrap{min-height:52vh;border-radius:16px}
+    .headBtns .btn{padding:8px 10px}
+    .settingGrid,.modeSelect{grid-template-columns:1fr}
+    .missionTurn{font-size:16px}
+    .missionName{font-size:24px}
+    .missionDesc{font-size:15px}
+    .rollInsideBtn{padding:11px 10px;font-size:18px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>🏝️ 삼각 보물섬 대결</h1>
+      <div class="sub">주사위를 굴려 미션을 정하고, 삼각형을 만들어 보물을 차지하세요.</div>
+    </div>
+    <div class="headBtns">
+      <button class="btn" id="helpBtn">게임 방법</button>
+      <button class="btn warn" id="resetBtn">새 게임</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="boardWrap">
+      <svg id="board" viewBox="0 0 1040 720" aria-label="삼각형 게임판"></svg>
+    </section>
+
+    <aside class="side">
+      <section class="missionCard" id="missionCard">
+        <div class="missionTurn" id="missionTurn">파랑팀 차례</div>
+        <button class="rollInsideBtn" id="rollBtn">🎲 주사위 굴리기</button>
+        <div class="rollingBox" id="rollingBox">
+          <span class="diceSpin">🎲</span>
+          <span>주사위 굴리는 중...</span>
+        </div>
+        <div class="missionName" id="missionName">주사위를 굴리세요</div>
+        <div class="missionDesc" id="missionDesc">버튼을 눌러 이번 삼각형 미션을 정하세요.</div>
+      </section>
+
+      <section class="scoreRow">
+        <div class="score"><span id="p1Name">파랑팀</span><b id="p1Score">0</b><span class="small">점</span></div>
+        <div class="score p2"><span id="p2Name">주황팀</span><b id="p2Score">0</b><span class="small">점</span></div>
+      </section>
+
+      <section class="card">
+        <div class="btnRow">
+          <button class="btn ghost" id="undoBtn">점 선택 취소</button>
+          <button class="btn" id="passBtn">기회 넘기기</button>
+        </div>
+        <div class="hint" style="text-align:center;margin-top:8px">
+          주사위를 굴린 뒤 점 3개를 선택하세요.
+        </div>
+      </section>
+
+      <section class="card gainCard">
+        <div class="gainLabel">이번 획득</div>
+        <div class="gainValue" id="gainValue">—</div>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<div class="modal show" id="startModal">
+  <div class="modalBox">
+    <h2>게임 시작</h2>
+    <p style="margin-top:0;color:#536a7c">1인용(컴퓨터와 대결) 또는 2인용(친구와 대결)을 선택하세요.</p>
+
+    <div class="modeSelect">
+      <button class="modeCard active" id="singleModeBtn" type="button">
+        🤖 1인용<br><span class="small">컴퓨터와 대결</span>
+      </button>
+      <button class="modeCard" id="dualModeBtn" type="button">
+        👥 2인용<br><span class="small">친구와 대결</span>
+      </button>
+    </div>
+
+    <div id="singleFields">
+      <div class="field">
+        <label>내 이름</label>
+        <input id="singleName" maxlength="10" value="파랑팀" />
+      </div>
+      <div class="hint" style="margin-top:10px">
+        1인용은 <b>나 vs 컴퓨터</b>로 진행됩니다. 내가 먼저 시작합니다.
+      </div>
+    </div>
+
+    <div id="dualFields" class="hidden">
+      <div class="settingGrid">
+        <div class="field">
+          <label>1번 선수 이름</label>
+          <input id="name1" maxlength="10" value="파랑팀" />
+        </div>
+        <div class="field">
+          <label>2번 선수 이름</label>
+          <input id="name2" maxlength="10" value="주황팀" />
+        </div>
+      </div>
+      <div class="hint" style="margin-top:10px">
+        2인용은 두 사람 중 <b>누가 먼저 할지 랜덤</b>으로 정합니다.
+      </div>
+    </div>
+
+    <div class="hint" style="margin-top:14px">
+      기본 규칙은 고정입니다.<br>
+      총 12차례 · 미션 4종(정삼각형, 이등변삼각형, 직각삼각형, 둔각삼각형) · 판에 있는 삼각형과 한 변 겹치기
+    </div>
+
+    <div class="modalActions">
+      <button class="btn primary" id="startBtn">시작하기</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="helpModal">
+  <div class="modalBox">
+    <h2>게임 방법</h2>
+    <div class="rules">
+      <ol>
+        <li>자기 차례가 되면 <b>주사위 굴리기</b> 버튼을 눌러 이번 미션을 정합니다.</li>
+        <li>게임판의 점 3개를 눌러 조건에 맞는 삼각형을 만듭니다.</li>
+        <li><b>모든 변의 길이는 4칸 이하</b>여야 하며, 너무 먼 점은 선택되지 않습니다.</li>
+        <li>정답이면 삼각형 안/변 위의 보물을 얻습니다.</li>
+        <li>판에 삼각형이 하나라도 그려져 있다면, 새 삼각형은 <b>판에 있는 삼각형 중 하나와 한 변이 일부라도 이어져야</b> 합니다. 단, <b>삼각형의 내부가 기존 삼각형과 겹치면 안 됩니다.</b></li>
+        <li><b>틀리면 그 즉시 차례가 상대방에게 넘어갑니다.</b></li>
+        <li>12차례가 끝났을 때 점수가 높은 사람이 이깁니다.</li>
+      </ol>
+    </div>
+    <div class="modalActions"><button class="btn primary" id="closeHelpBtn">확인</button></div>
+  </div>
+</div>
+
+<div class="modal" id="endModal">
+  <div class="modalBox">
+    <h2 id="endTitle">게임 끝!</h2>
+    <div id="endBody" style="font-size:18px;line-height:1.7"></div>
+    <div class="modalActions"><button class="btn primary" id="againBtn">한 판 더</button></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const svg = document.getElementById('board');
+  const NS = 'http://www.w3.org/2000/svg';
+  const W = 1040, H = 720;
+  const cols = 19, rows = 14;
+  const dx = 50, dy = dx * Math.sqrt(3) / 2;
+  const x0 = 58, y0 = 58;
+  const MAX_SIDE_UNITS = 4;
+  const challenges = ['정삼각형','이등변삼각형','직각삼각형','둔각삼각형'];
+
+  const state = {
+    gameType:'single',
+    players:[],
+    turn:0, step:0, maxSteps:12,
+    selected:[], points:[], pointMap:{},
+    treasures:[], challenge:null, mustRoll:true,
+    doneTriangles:[],
+    allTriangles:[], aiBusy:false, isRolling:false
+  };
+
+  const challengeDesc = {
+    '정삼각형':'세 변의 길이가 같은 삼각형',
+    '이등변삼각형':'두 변의 길이가 같은 삼각형',
+    '직각삼각형':'한 각이 직각인 삼각형',
+    '둔각삼각형':'한 각이 둔각인 삼각형'
+  };
+
+  function $id(id){ return document.getElementById(id); }
+  function currentPlayer(){ return state.players[state.turn]; }
+  function el(tag, attrs={}, text=''){
+    const n=document.createElementNS(NS,tag);
+    Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));
+    if(text) n.textContent=text;
+    return n;
+  }
+
+  function buildPoints(){
+    state.points=[];
+    state.pointMap={};
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const x=x0+c*dx+(r%2?dx/2:0);
+        const y=y0+r*dy;
+        if(x < W-32 && y < H-32){
+          const p={id:`${r}-${c}`,r,c,x,y};
+          state.points.push(p);
+          state.pointMap[p.id]=p;
+        }
+      }
+    }
+  }
+
+  function lineLen2(a,b){ return (a.x-b.x)**2 + (a.y-b.y)**2; }
+  function triangleArea2(a,b,c){
+    return Math.abs((b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x));
+  }
+  function classify(a,b,c){
+    if(triangleArea2(a,b,c) < 1) return {valid:false, labels:[]};
+
+    const ss=[lineLen2(a,b), lineLen2(b,c), lineLen2(c,a)].sort((x,y)=>x-y);
+    const tol=dx*dx*0.03;
+    const eq01=Math.abs(ss[0]-ss[1])<tol;
+    const eq12=Math.abs(ss[1]-ss[2])<tol;
+    const labels=[];
+
+    if(eq01 && eq12){
+      labels.push('정삼각형');
+      labels.push('이등변삼각형'); // 정삼각형은 이등변삼각형이기도 함
+    } else if(eq01 || eq12){
+      labels.push('이등변삼각형');
+    }
+
+    const diff=ss[0]+ss[1]-ss[2];
+    if(Math.abs(diff)<tol) labels.push('직각삼각형');
+    else if(diff<0) labels.push('둔각삼각형');
+    else labels.push('예각삼각형');
+
+    return {valid:true, labels, ss};
+  }
+
+  function pointInTri(p,a,b,c){
+    const area=(p1,p2,p3)=>(p1.x*(p2.y-p3.y)+p2.x*(p3.y-p1.y)+p3.x*(p1.y-p2.y))/2;
+    const A=Math.abs(area(a,b,c));
+    const A1=Math.abs(area(p,b,c));
+    const A2=Math.abs(area(a,p,c));
+    const A3=Math.abs(area(a,b,p));
+    return Math.abs(A-(A1+A2+A3)) < 2.2;
+  }
+
+  function sidesFromIds(ids){
+    return [
+      [ids[0],ids[1]].sort().join('|'),
+      [ids[1],ids[2]].sort().join('|'),
+      [ids[2],ids[0]].sort().join('|')
+    ];
+  }
+
+  function buildAllTriangles(){
+    state.allTriangles=[];
+    const max2=(MAX_SIDE_UNITS*dx)**2 + 1;
+    const pts=state.points;
+    for(let i=0;i<pts.length;i++){
+      const a=pts[i];
+      for(let j=i+1;j<pts.length;j++){
+        const b=pts[j];
+        if(lineLen2(a,b) > max2) continue;
+        for(let k=j+1;k<pts.length;k++){
+          const c=pts[k];
+          if(lineLen2(a,c) > max2) continue;
+          if(lineLen2(b,c) > max2) continue;
+          const info=classify(a,b,c);
+          if(!info.valid) continue;
+          const ids=[a.id,b.id,c.id];
+          state.allTriangles.push({
+            ids,
+            pts:[a,b,c],
+            sides:sidesFromIds(ids),
+            labels:info.labels,
+            centroid:{x:(a.x+b.x+c.x)/3,y:(a.y+b.y+c.y)/3}
+          });
+        }
+      }
+    }
+  }
+
+  function rand(min,max){ return Math.random()*(max-min)+min; }
+  function shuffle(arr){
+    const a=[...arr];
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  function makeTreasures(){
+    const kinds=[
+      ['gem',1],['ring',2],['crown',3],['gem',1],['ring',2],['gem',1],['crown',3],['gem',1],
+      ['ring',2],['gem',1],['ring',2],['gem',1],['crown',3],['gem',1],['ring',2],['gem',1]
+    ];
+    const positions=[];
+    for(const tri of shuffle(state.allTriangles)){
+      if(positions.length >= kinds.length) break;
+      const x=tri.centroid.x + rand(-8,8);
+      const y=tri.centroid.y + rand(-8,8);
+      if(x < 90 || x > 950 || y < 90 || y > 640) continue;
+      const tooClose=positions.some(p=>((p.x-x)**2+(p.y-y)**2)<68*68);
+      if(tooClose) continue;
+      positions.push({x,y});
+    }
+    while(positions.length < kinds.length){
+      positions.push({x:120 + positions.length*40, y:130 + (positions.length%6)*60});
+    }
+    state.treasures=kinds.map((k,i)=>({
+      id:i,x:positions[i].x,y:positions[i].y,kind:k[0],value:k[1],taken:false,owner:null
+    }));
+  }
+
+  function canSelectByLength(candidate){
+    if(!state.selected.length) return true;
+    const max2=(MAX_SIDE_UNITS*dx)**2 + 1;
+    return state.selected.every(id=>{
+      const p=state.pointMap[id];
+      return lineLen2(p,candidate) <= max2;
+    });
+  }
+
+  function cross(a,b,c){
+    return (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
+  }
+  function segmentOverlapPositive(a,b,c,d){
+    const eps=1e-4;
+    if(Math.abs(cross(a,b,c)) > 0.8 || Math.abs(cross(a,b,d)) > 0.8) return false;
+    const ab={x:b.x-a.x,y:b.y-a.y};
+    const len2=ab.x*ab.x+ab.y*ab.y;
+    if(len2 < eps) return false;
+    const tc=((c.x-a.x)*ab.x+(c.y-a.y)*ab.y)/len2;
+    const td=((d.x-a.x)*ab.x+(d.y-a.y)*ab.y)/len2;
+    const lo=Math.max(0, Math.min(tc,td));
+    const hi=Math.min(1, Math.max(tc,td));
+    return hi - lo > 0.0001; // 한 점만 만나는 것은 제외
+  }
+  function triangleEdgesFromPts(pts){
+    return [[pts[0],pts[1]],[pts[1],pts[2]],[pts[2],pts[0]]];
+  }
+  function trianglesShareOverlappingEdge(triA, triB){
+    const edgesA=triangleEdgesFromPts(triA.pts);
+    const edgesB=triangleEdgesFromPts(triB.pts);
+    for(const [a,b] of edgesA){
+      for(const [c,d] of edgesB){
+        if(segmentOverlapPositive(a,b,c,d)) return true;
+      }
+    }
+    return false;
+  }
+
+  function orient(a,b,c){
+    return (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
+  }
+
+  function pointStrictlyInsideTriangle(p, tri){
+    const [a,b,c]=tri.pts;
+    const o1=orient(a,b,p), o2=orient(b,c,p), o3=orient(c,a,p);
+    const eps=0.8;
+    const hasPos=(o1>eps)||(o2>eps)||(o3>eps);
+    const hasNeg=(o1<-eps)||(o2<-eps)||(o3<-eps);
+    if(hasPos && hasNeg) return false;
+    // 경계 위는 겹침으로 보지 않고, 내부에 확실히 들어간 경우만 true
+    return Math.abs(o1)>eps && Math.abs(o2)>eps && Math.abs(o3)>eps;
+  }
+
+  function properSegmentCross(a,b,c,d){
+    const o1=orient(a,b,c), o2=orient(a,b,d), o3=orient(c,d,a), o4=orient(c,d,b);
+    const eps=0.8;
+    // 끝점 접촉이나 같은 직선 위 겹침은 제외하고, 내부를 가로지르는 교차만 판정
+    return ((o1>eps && o2<-eps) || (o1<-eps && o2>eps)) &&
+           ((o3>eps && o4<-eps) || (o3<-eps && o4>eps));
+  }
+
+  function trianglesInteriorOverlap(triA, triB){
+    // 한 삼각형의 꼭짓점이 다른 삼각형 내부에 들어가는 경우
+    if(triA.pts.some(p=>pointStrictlyInsideTriangle(p, triB))) return true;
+    if(triB.pts.some(p=>pointStrictlyInsideTriangle(p, triA))) return true;
+
+    // 변끼리 내부에서 X자로 교차하는 경우
+    const ea=triangleEdgesFromPts(triA.pts);
+    const eb=triangleEdgesFromPts(triB.pts);
+    for(const [a,b] of ea){
+      for(const [c,d] of eb){
+        if(properSegmentCross(a,b,c,d)) return true;
+      }
+    }
+
+    // 완전히 같은 삼각형(또는 사실상 같은 영역)을 다시 그리는 것도 금지
+    const aIds = triA.pts.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).sort().join('|');
+    const bIds = triB.pts.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).sort().join('|');
+    if(aIds === bIds) return true;
+
+    return false;
+  }
+
+  function candidateConnectsWithoutAreaOverlap(candidateTri){
+    if(!hasAnyTriangleOnBoard()) return true;
+
+    // 기존 삼각형 중 하나와 변은 일부 겹쳐야 함
+    const sharesBoundary = state.doneTriangles.some(existing =>
+      trianglesShareOverlappingEdge(candidateTri, existing)
+    );
+    if(!sharesBoundary) return false;
+
+    // 그러나 어떤 기존 삼각형의 내부와도 겹치면 안 됨
+    const overlapsArea = state.doneTriangles.some(existing =>
+      trianglesInteriorOverlap(candidateTri, existing)
+    );
+    return !overlapsArea;
+  }
+
+  function hasAnyTriangleOnBoard(){
+    return state.doneTriangles.length > 0;
+  }
+
+  function draw(){
+    svg.innerHTML='';
+    svg.appendChild(el('rect',{x:24,y:22,width:992,height:676,rx:34,fill:'#fffdf4',stroke:'#e5dcb5','stroke-width':3}));
+
+    const grid=el('g',{stroke:'#9ed8dc','stroke-width':1.05,opacity:.78});
+    for(const p of state.points){
+      for(const q of state.points){
+        if(p.id>=q.id) continue;
+        const d2=lineLen2(p,q);
+        if(Math.abs(d2-dx*dx)<3){
+          grid.appendChild(el('line',{x1:p.x,y1:p.y,x2:q.x,y2:q.y}));
+        }
+      }
+    }
+    svg.appendChild(grid);
+
+    const old=el('g',{opacity:.24});
+    state.doneTriangles.forEach(t=>{
+      const col=t.player===0?'#5c9ded':'#ff8a65';
+      old.appendChild(el('polygon',{
+        points:t.pts.map(p=>`${p.x},${p.y}`).join(' '),
+        fill:col,stroke:col,'stroke-width':4.5,'stroke-linejoin':'round'
+      }));
+    });
+    svg.appendChild(old);
+
+
+    const tg=el('g',{});
+    for(const t of state.treasures){
+      if(t.taken){
+        const col=t.owner===0?'#5c9ded':'#ff8a65';
+        tg.appendChild(el('circle',{cx:t.x,cy:t.y,r:18,fill:col,opacity:.22}));
+        tg.appendChild(el('text',{x:t.x,y:t.y+6,'text-anchor':'middle','font-size':18,opacity:.55},'✓'));
+        continue;
+      }
+      if(t.kind==='gem'){
+        tg.appendChild(el('polygon',{points:`${t.x},${t.y-14} ${t.x+12},${t.y} ${t.x},${t.y+14} ${t.x-12},${t.y}`,fill:'#ff6b46',stroke:'#c94d31','stroke-width':3}));
+      } else if(t.kind==='ring'){
+        tg.appendChild(el('circle',{cx:t.x,cy:t.y,r:11,fill:'none',stroke:'#f4b400','stroke-width':6}));
+      } else {
+        tg.appendChild(el('text',{x:t.x,y:t.y+10,'text-anchor':'middle','font-size':29},'👑'));
+      }
+      tg.appendChild(el('text',{x:t.x+18,y:t.y-12,'font-size':12,'font-weight':900,fill:'#6c6a58'},`+${t.value}`));
+    }
+    svg.appendChild(tg);
+
+    if(state.selected.length){
+      const selPts=state.selected.map(id=>state.pointMap[id]);
+      const col=state.turn===0?'#5c9ded':'#ff8a65';
+      const g=el('g',{});
+      if(selPts.length>=2){
+        g.appendChild(el('polyline',{
+          points:selPts.map(p=>`${p.x},${p.y}`).join(' '),
+          fill:'none',stroke:col,'stroke-width':6,'stroke-linecap':'round','stroke-linejoin':'round'
+        }));
+      }
+      if(selPts.length===3){
+        g.appendChild(el('polygon',{
+          points:selPts.map(p=>`${p.x},${p.y}`).join(' '),
+          fill:col,opacity:.18,stroke:col,'stroke-width':6,'stroke-linejoin':'round'
+        }));
+      }
+      svg.appendChild(g);
+    }
+
+    const locked=currentPlayer().isCPU || state.mustRoll || state.isRolling;
+    const pg=el('g',{});
+    for(const p of state.points){
+      const chosen=state.selected.includes(p.id);
+      const allowed=!locked && (chosen || canSelectByLength(p));
+      const c=chosen?(state.turn===0?'#327fd4':'#ff6a3d'):(allowed?'#244b5a':'#b9c7cc');
+      const r=chosen?8.2:(allowed?4.4:3.6);
+      const hit=el('circle',{cx:p.x,cy:p.y,r:17,fill:'transparent','data-id':p.id,style:'cursor:pointer'});
+      hit.addEventListener('pointerdown',e=>{e.preventDefault();selectPoint(p.id)});
+      pg.appendChild(hit);
+      pg.appendChild(el('circle',{
+        cx:p.x,cy:p.y,r,fill:c,stroke:'#fff','stroke-width':chosen?2.8:1.2,
+        opacity:(locked ? (chosen?1:.45) : (allowed||chosen?1:.42)),'pointer-events':'none'
+      }));
+    }
+    svg.appendChild(pg);
+  }
+
+  function setGain(points=null, type=''){
+    const g=$id('gainValue');
+    if(points === null){
+      g.textContent='—';
+      g.className='gainValue';
+      return;
+    }
+    g.textContent=`+${points}점`;
+    g.className='gainValue'+(type ? ' '+type : '');
+  }
+
+  // 화면의 안내 문구는 제거했습니다. 기존 로직에서 호출되더라도 표시하지 않습니다.
+  function setStatus(){ }
+
+  function updateScore(){
+    $id('p1Score').textContent=state.players[0].score;
+    $id('p2Score').textContent=state.players[1].score;
+  }
+
+  function updateMissionCard(){
+    const card=$id('missionCard');
+    card.className='missionCard'+(state.turn===1?' p2':'');
+    $id('missionTurn').textContent=`${currentPlayer().name} 차례`;
+
+    if(state.isRolling){
+      $id('rollBtn').style.display='none';
+      $id('rollingBox').classList.add('show');
+      $id('missionName').textContent='주사위 굴리는 중';
+      $id('missionDesc').textContent='';
+    } else {
+      $id('rollingBox').classList.remove('show');
+      $id('rollBtn').style.display='block';
+      if(state.mustRoll){
+        $id('missionName').textContent='주사위를 굴리세요';
+        $id('missionDesc').textContent='버튼을 눌러 이번 미션을 정하세요.';
+      } else {
+        $id('missionName').textContent=state.challenge;
+        $id('missionDesc').textContent=challengeDesc[state.challenge] || '';
+      }
+    }
+  }
+
+  function updateControls(){
+    const cpuTurn=currentPlayer().isCPU;
+    $id('rollBtn').disabled = cpuTurn || !state.mustRoll || state.isRolling;
+    $id('undoBtn').disabled = cpuTurn || !state.selected.length || state.mustRoll || state.isRolling;
+    $id('passBtn').disabled = cpuTurn || state.isRolling;
+  }
+
+  function updateUI(preserveStatus=false){
+    $id('p1Name').textContent=state.players[0].name;
+    $id('p2Name').textContent=state.players[1].name;
+    updateScore();
+    updateMissionCard();
+    updateControls();
+    if(state.mustRoll && !state.isRolling) setGain(null);
+    draw();
+
+    if(!preserveStatus){
+      if(state.isRolling){
+        setStatus('주사위를 굴리는 중입니다.', '');
+      } else if(state.mustRoll){
+        setStatus(currentPlayer().isCPU ? '컴퓨터가 주사위를 굴릴 차례입니다.' : '먼저 주사위를 굴려 이번 미션을 정하세요.','');
+      } else {
+        if(currentPlayer().isCPU){
+          setStatus(`컴퓨터가 ${state.challenge}을(를) 만드는 중입니다.`, '');
+        } else {
+          const msg = hasAnyTriangleOnBoard()
+            ? '점 3개를 선택하세요. 판에 있는 삼각형과 한 변이 일부라도 겹쳐야 합니다.'
+            : '점 3개를 선택하세요. 첫 삼각형은 자유롭게 그릴 수 있습니다.';
+          setStatus(msg,'');
+        }
+      }
+    }
+    maybeRunComputerTurn();
+  }
+
+  function animateDice(callback){
+    state.isRolling = true;
+    updateUI(true);
+    const faces=['⚀','⚁','⚂','⚃','⚄','⚅'];
+    let ticks=0;
+    const btn=$id('rollBtn');
+    const timer=setInterval(()=>{
+      ticks++;
+      btn.textContent = `${faces[Math.floor(Math.random()*6)]} 굴리는 중`;
+      if(ticks >= 10){
+        clearInterval(timer);
+        btn.textContent = '🎲 주사위 굴리기';
+        state.isRolling = false;
+        callback();
+      }
+    }, 90);
+  }
+
+  function rollDice(fromAI=false){
+    if(!state.mustRoll || state.isRolling) return;
+    state.selected=[];
+    animateDice(()=>{
+      state.challenge = challenges[Math.floor(Math.random()*challenges.length)];
+      state.mustRoll = false;
+      updateUI(true);
+      if(fromAI){
+        setStatus(`컴퓨터가 미션을 뽑았습니다. 이번 미션은 ${state.challenge}입니다.`, 'good');
+      } else {
+        setStatus(`이번 미션은 ${state.challenge}입니다.`, 'good');
+      }
+      if(fromAI){
+        setTimeout(computerPlayMove, 600);
+      }
+    });
+  }
+
+  function selectPoint(id){
+    if(currentPlayer().isCPU || state.mustRoll || state.isRolling) return;
+
+    if(state.selected.includes(id)){
+      state.selected=state.selected.filter(x=>x!==id);
+      updateControls();
+      draw();
+      setStatus('선택한 점을 취소했습니다.','');
+      return;
+    }
+    if(state.selected.length >= 3) return;
+
+    const candidate=state.pointMap[id];
+    if(!canSelectByLength(candidate)){
+      setStatus('이 점은 너무 멀어요! 이미 고른 점에서 4칸 이내의 점을 선택하세요.','bad');
+      return;
+    }
+
+    state.selected.push(id);
+    updateControls();
+    draw();
+
+    if(state.selected.length === 3){
+      window.setTimeout(checkTriangle, 180);
+    } else {
+      setStatus(`${state.selected.length}개 선택됨. 4칸 이내에서 ${3-state.selected.length}개 더 선택하세요.`,'');
+    }
+  }
+
+  function triangleTreasureValue(tri){
+    let gained=0, count=0;
+    for(const t of state.treasures){
+      if(!t.taken && pointInTri(t, ...tri.pts)){
+        gained += t.value;
+        count++;
+      }
+    }
+    return {gained, count};
+  }
+
+  function failTurn(message){
+    setGain(0,'bad');
+    state.selected=[];
+    updateControls();
+    draw();
+    window.setTimeout(endTurn,900);
+  }
+
+  function checkTriangle(){
+    const pts=state.selected.map(id=>state.pointMap[id]);
+    const info=classify(...pts);
+
+    if(!info.valid){
+      failTurn('실패! 세 점이 한 직선 위에 있어 삼각형이 아닙니다. 상대방 차례로 넘어갑니다.');
+      return;
+    }
+
+    if(hasAnyTriangleOnBoard()){
+      const candidateTri={pts:pts};
+      const sharesBoundary = state.doneTriangles.some(existing =>
+        trianglesShareOverlappingEdge(candidateTri, existing)
+      );
+      if(!sharesBoundary){
+        failTurn('연결 실패');
+        return;
+      }
+      const overlapsArea = state.doneTriangles.some(existing =>
+        trianglesInteriorOverlap(candidateTri, existing)
+      );
+      if(overlapsArea){
+        failTurn('겹침 실패');
+        return;
+      }
+    }
+
+    if(!info.labels.includes(state.challenge)){
+      const shown = info.labels.filter(x => x !== '예각삼각형');
+      failTurn(`실패! 만든 삼각형은 “${shown.join(' · ')}”입니다. 상대방 차례로 넘어갑니다.`);
+      return;
+    }
+
+    let gained=0, count=0;
+    for(const t of state.treasures){
+      if(!t.taken && pointInTri(t, ...pts)){
+        t.taken=true; t.owner=state.turn; gained += t.value; count++;
+      }
+    }
+    state.players[state.turn].score += gained;
+
+    const tri={ids:[...state.selected], pts:pts.map(p=>({...p})), player:state.turn};
+    state.doneTriangles.push(tri);
+
+    setGain(gained, gained>0 ? 'good' : 'bad');
+    state.selected=[];
+    updateScore();
+    updateControls();
+    draw();
+    window.setTimeout(endTurn,1100);
+  }
+
+  function getComputerMove(){
+    const candidates=state.allTriangles.filter(tri=>{
+      if(!tri.labels.includes(state.challenge)) return false;
+      if(hasAnyTriangleOnBoard() && !candidateConnectsWithoutAreaOverlap(tri)) return false;
+      return true;
+    });
+    if(!candidates.length) return null;
+
+    let best=null, bestScore=-Infinity;
+    for(const tri of candidates){
+      const tv=triangleTreasureValue(tri);
+      const score=tv.gained*10 + tv.count + Math.random()*0.4;
+      if(score > bestScore){
+        bestScore=score;
+        best=tri;
+      }
+    }
+    return best;
+  }
+
+  function maybeRunComputerTurn(){
+    if(state.gameType !== 'single') return;
+    if(!currentPlayer().isCPU) return;
+    if(state.aiBusy || state.isRolling) return;
+    if($id('startModal').classList.contains('show') || $id('endModal').classList.contains('show')) return;
+
+    state.aiBusy = true;
+    if(state.mustRoll){
+      setTimeout(()=> rollDice(true), 700);
+    } else {
+      setTimeout(computerPlayMove, 700);
+    }
+  }
+
+  function computerPlayMove(){
+    const move=getComputerMove();
+    if(!move){
+      setStatus('컴퓨터가 만들 수 있는 삼각형을 찾지 못해 기회를 넘깁니다.','bad');
+      state.aiBusy=false;
+      setTimeout(endTurn, 1000);
+      return;
+    }
+    state.selected=[...move.ids];
+    updateControls();
+    draw();
+    setStatus(`컴퓨터가 ${state.challenge}을(를) 시도합니다.`, '');
+    setTimeout(()=>{
+      state.aiBusy=false;
+      checkTriangle();
+    }, 800);
+  }
+
+  function endTurn(){
+    state.step++;
+    if(state.step >= state.maxSteps || state.treasures.every(t=>t.taken)){
+      finishGame();
+      return;
+    }
+    state.turn = 1 - state.turn;
+    state.selected = [];
+    state.challenge = null;
+    state.mustRoll = true;
+    state.aiBusy = false;
+    state.isRolling = false;
+    updateUI();
+  }
+
+  function finishGame(){
+    const [a,b]=state.players;
+    let body='';
+    if(a.score>b.score) body=`🏆 <b>${a.name}</b> 승리!<br>${a.score}점 : ${b.score}점`;
+    else if(b.score>a.score) body=`🏆 <b>${b.name}</b> 승리!<br>${a.score}점 : ${b.score}점`;
+    else body=`🤝 무승부!<br>${a.score}점 : ${b.score}점`;
+    body += '<p style="font-size:14px;color:#607485">가장 기억에 남는 삼각형을 하나 골라 왜 그 모양이 되었는지 설명해 보세요.</p>';
+    $id('endBody').innerHTML = body;
+    $id('endModal').classList.add('show');
+  }
+
+  function setModeUI(mode){
+    state.gameType=mode;
+    $id('singleModeBtn').classList.toggle('active', mode==='single');
+    $id('dualModeBtn').classList.toggle('active', mode==='dual');
+    $id('singleFields').classList.toggle('hidden', mode!=='single');
+    $id('dualFields').classList.toggle('hidden', mode!=='dual');
+  }
+
+  function startGame(){
+    if(state.gameType === 'single'){
+      const humanName=($id('singleName').value || '나').trim().slice(0,10);
+      state.players=[
+        {name:humanName, score:0, isCPU:false},
+        {name:'컴퓨터', score:0, isCPU:true}
+      ];
+      state.turn=0;
+    } else {
+      const n1=($id('name1').value || '1번 선수').trim().slice(0,10);
+      const n2=($id('name2').value || '2번 선수').trim().slice(0,10);
+      state.players=[
+        {name:n1, score:0, isCPU:false},
+        {name:n2, score:0, isCPU:false}
+      ];
+      state.turn=Math.random() < 0.5 ? 0 : 1;
+    }
+
+    state.step=0;
+    state.selected=[];
+    state.challenge=null;
+    state.mustRoll=true;
+    state.doneTriangles=[];
+    state.aiBusy=false;
+    state.isRolling=false;
+    makeTreasures();
+
+    $id('startModal').classList.remove('show');
+    $id('endModal').classList.remove('show');
+    updateUI(true);
+
+    if(state.gameType === 'dual'){
+      setStatus(`무작위로 ${currentPlayer().name}가 먼저 시작합니다. 주사위를 굴리세요.`, 'good');
+    } else {
+      setStatus(`${currentPlayer().name}부터 시작합니다. 주사위를 굴리세요.`, 'good');
+    }
+  }
+
+  $id('singleModeBtn').addEventListener('click',()=>setModeUI('single'));
+  $id('dualModeBtn').addEventListener('click',()=>setModeUI('dual'));
+  $id('startBtn').addEventListener('click',startGame);
+  $id('resetBtn').addEventListener('click',()=>{ $id('startModal').classList.add('show'); });
+  $id('againBtn').addEventListener('click',()=>{ $id('endModal').classList.remove('show'); $id('startModal').classList.add('show'); });
+  $id('helpBtn').addEventListener('click',()=>{ $id('helpModal').classList.add('show'); });
+  $id('closeHelpBtn').addEventListener('click',()=>{ $id('helpModal').classList.remove('show'); });
+  $id('undoBtn').addEventListener('click',()=>{
+    if(currentPlayer().isCPU || state.mustRoll || state.isRolling) return;
+    if(!state.selected.length){
+      setStatus('취소할 점이 없습니다.','');
+      return;
+    }
+    state.selected.pop();
+    updateControls();
+    draw();
+    setStatus(state.selected.length ? `${state.selected.length}개 선택됨.` : '선택한 점을 취소했습니다.','');
+  });
+  $id('passBtn').addEventListener('click',()=>{
+    if(currentPlayer().isCPU || state.isRolling) return;
+    state.selected=[];
+    updateControls();
+    draw();
+    setGain(0,'bad');
+    setTimeout(endTurn, 250);
+  });
+  $id('rollBtn').addEventListener('click',()=>rollDice(false));
+
+  buildPoints();
+  buildAllTriangles();
+  makeTreasures();
+  setModeUI('single');
+  draw();
+})();
+</script>
+</body>
+</html>
