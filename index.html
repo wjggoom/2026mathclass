@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>수업 활동 서랍</title>
+<meta name="description" content="브라우저에서 바로 여는 교과 활동 모음">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E7E8E2;
+    --grid:#D6D8CD;
+    --card:#FCFCFA;
+    --ink:#17251E;
+    --muted:#5D6A61;
+    --line:#C7CABE;
+    --accent:#1F4FBF;
+    --mark:#F0C441;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    font-family:'Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    color:var(--ink);
+    background-color:var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:26px 26px;
+    line-height:1.65;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px;}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  /* ── 머리말 + 번호 입력 ── */
+  header{padding:56px 0 30px;}
+  .title{
+    font-family:'Gowun Batang',serif;
+    font-weight:700;
+    font-size:clamp(2rem,5.2vw,2.9rem);
+    letter-spacing:-.02em;
+    margin:0;line-height:1.25;
+  }
+  .lede{margin:12px 0 0;max-width:34em;color:var(--muted);}
+
+  .jump{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin-top:26px;padding:18px 20px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-left:3px solid var(--mark);
+    border-radius:var(--radius);
+  }
+  .jump label{
+    flex:1 0 100%;
+    font-family:'Gowun Batang',serif;
+    font-size:1.05rem;
+  }
+  .jump-num{
+    width:6.5em;
+    font:inherit;font-size:1.5rem;
+    font-family:'Gowun Batang',serif;
+    text-align:center;letter-spacing:.12em;
+    padding:8px 10px;
+    color:var(--ink);background:var(--paper);
+    border:1px solid var(--line);border-radius:var(--radius);
+  }
+  .jump-go{
+    font:inherit;font-size:1rem;font-weight:600;
+    padding:12px 22px;
+    color:var(--card);background:var(--ink);
+    border:none;border-radius:var(--radius);cursor:pointer;
+  }
+  .jump-msg{flex:1 0 100%;margin:0;font-size:.9rem;color:var(--muted);}
+  .jump-msg[data-error="true"]{color:#A32E12;}
+
+  /* ── 찾기 줄 ── */
+  .controls{
+    position:sticky;top:0;z-index:5;
+    background:var(--paper);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    padding:13px 0;margin-bottom:28px;
+  }
+  .controls .wrap{display:flex;flex-wrap:wrap;gap:11px;align-items:center;}
+  .search{
+    flex:1 1 240px;min-width:0;
+    font:inherit;padding:10px 13px;
+    color:var(--ink);background:var(--card);
+    border:1px solid var(--line);border-radius:var(--radius);
+  }
+  .search::placeholder{color:#8B9489;}
+  .filters{display:flex;flex-wrap:wrap;gap:7px;width:100%;}
+  .chip{
+    font:inherit;font-size:.88rem;padding:5px 12px;
+    color:var(--muted);background:transparent;
+    border:1px solid var(--line);border-radius:99px;cursor:pointer;
+  }
+  .chip[aria-pressed="true"]{color:var(--card);background:var(--ink);border-color:var(--ink);}
+  .sort{
+    font:inherit;font-size:.88rem;margin-left:auto;padding:5px 10px;
+    color:var(--muted);background:transparent;border:none;
+    border-bottom:1px solid var(--line);cursor:pointer;
+  }
+
+  /* ── 활동 목록 ── */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px;}
+  .card{
+    position:relative;
+    padding:18px 20px 16px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-left:3px solid var(--line);
+    border-radius:var(--radius);
+  }
+  .card:hover,.card:focus-within{border-left-color:var(--accent);}
+  .num{font-family:'Gowun Batang',serif;font-size:.86rem;color:var(--muted);letter-spacing:.06em;}
+  .card-title{font-family:'Gowun Batang',serif;font-weight:700;font-size:1.24rem;line-height:1.4;margin:4px 0 8px;}
+  .card-title a{color:inherit;text-decoration:none;}
+  .card-title a::after{content:'';position:absolute;inset:0;}
+  .card:hover .card-title a{text-decoration:underline;text-underline-offset:3px;}
+  .card-desc{margin:0;font-size:.93rem;color:var(--muted);}
+  .meta{
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    margin-top:14px;padding-top:11px;
+    border-top:1px dotted var(--line);
+    font-size:.83rem;color:var(--muted);
+  }
+  .meta b{font-weight:600;color:var(--ink);}
+  .qr-btn{
+    position:relative;z-index:1;margin-left:auto;
+    font:inherit;font-size:.83rem;padding:3px 10px;
+    color:var(--muted);background:transparent;
+    border:1px solid var(--line);border-radius:99px;cursor:pointer;
+  }
+  .qr-btn:hover{color:var(--ink);border-color:var(--ink);}
+
+  /* ── QR 창 ── */
+  dialog{
+    padding:0;max-width:min(92vw,400px);
+    color:var(--ink);background:var(--card);
+    border:1px solid var(--ink);border-radius:var(--radius);
+  }
+  dialog::backdrop{background:rgba(23,37,30,.55);}
+  .qr-body{padding:26px 26px 20px;text-align:center;}
+  .qr-body h2{font-family:'Gowun Batang',serif;font-size:1.2rem;margin:0 0 4px;}
+  .qr-body .qr-num{font-size:.85rem;color:var(--muted);margin:0 0 18px;}
+  .qr-code{display:flex;justify-content:center;min-height:200px;align-items:center;}
+  .qr-code img,.qr-code canvas{display:block;}
+  .qr-url{
+    margin:18px 0 0;padding:9px 10px;
+    font-size:.84rem;word-break:break-all;
+    background:var(--paper);border-radius:var(--radius);
+  }
+  .qr-close{
+    width:100%;font:inherit;padding:12px;
+    color:var(--card);background:var(--ink);
+    border:none;cursor:pointer;
+  }
+
+  /* ── 빈 화면 ── */
+  .empty{padding:48px 4px;max-width:32em;}
+  .empty h2{font-family:'Gowun Batang',serif;font-size:1.3rem;margin:0 0 8px;}
+  .empty p{margin:0;color:var(--muted);}
+  code{font-size:.9em;padding:1px 5px;background:#DFE0D9;border-radius:2px;}
+
+  footer{margin-top:52px;padding:22px 0 60px;border-top:1px solid var(--line);font-size:.86rem;color:var(--muted);}
+  footer p{margin:0;}
+
+  @media (max-width:520px){
+    header{padding-top:36px;}
+    .sort{margin-left:0;}
+    .jump-go{flex:1;}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .card{transition:border-left-color .15s ease;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1 class="title">수업 활동 서랍</h1>
+    <p class="lede">브라우저에서 바로 여는 교과 활동입니다. 설치도 로그인도 없습니다.</p>
+
+    <div class="jump">
+      <label for="jump-num">선생님이 불러 준 번호를 넣으세요</label>
+      <input id="jump-num" class="jump-num" type="text" inputmode="numeric"
+             placeholder="3" autocomplete="off" maxlength="3" aria-describedby="jump-msg">
+      <button type="button" class="jump-go" id="jump-go">열기</button>
+      <p class="jump-msg" id="jump-msg">3 만 넣어도 3번 활동이 열립니다.</p>
+    </div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="wrap">
+    <input type="search" id="search" class="search" placeholder="활동 이름이나 낱말로 찾기" aria-label="활동 검색" autocomplete="off">
+    <button type="button" class="sort" id="sort">최신순</button>
+    <div class="filters" id="filters"></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden></div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>QR을 눌러 화면에 띄우면 학생이 태블릿으로 바로 찍어 들어옵니다.</p>
+  </div>
+</footer>
+
+<dialog id="qr-dialog">
+  <div class="qr-body">
+    <h2 id="qr-title"></h2>
+    <p class="qr-num" id="qr-num"></p>
+    <div class="qr-code" id="qr-code"></div>
+    <p class="qr-url" id="qr-url"></p>
+  </div>
+  <button type="button" class="qr-close" id="qr-close">닫기</button>
+</dialog>
+
+<script src="activities.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
+<script>
+(function () {
+  var items = Array.isArray(window.ACTIVITIES) ? window.ACTIVITIES.slice() : null;
+
+  var grid = document.getElementById('grid');
+  var empty = document.getElementById('empty');
+  var search = document.getElementById('search');
+  var filterBox = document.getElementById('filters');
+  var sortBtn = document.getElementById('sort');
+  var jumpNum = document.getElementById('jump-num');
+  var jumpGo = document.getElementById('jump-go');
+  var jumpMsg = document.getElementById('jump-msg');
+
+  var state = { q: '', grade: '전체', subject: '전체', newest: true };
+
+  if (!items) {
+    empty.hidden = false;
+    empty.innerHTML = '<h2>활동 목록을 불러오지 못했습니다</h2>' +
+      '<p><code>activities.js</code> 파일이 <code>index.html</code>과 같은 폴더에 있는지 확인하세요.</p>';
+    return;
+  }
+
+  /* 깃허브 페이지는 001 만으로 001.html 을 찾아 줍니다.
+     내 컴퓨터에서 파일을 직접 열어 볼 때(file://)는 확장자가 있어야 하므로 자동으로 구분합니다. */
+  var isLocal = location.protocol === 'file:';
+  function pathOf(it) { return it.path || (it.id + (isLocal ? '.html' : '')); }
+  function urlOf(it) { return new URL(pathOf(it), location.href).href; }
+
+  /* ── 번호로 바로 열기 ── */
+  function jump() {
+    var raw = jumpNum.value.replace(/[^0-9]/g, '');
+    if (!raw) {
+      say('번호를 넣고 열기를 누르세요.', true);
+      return;
+    }
+    var id = ('00' + raw).slice(-3);
+    var hit = null;
+    items.forEach(function (it) { if (it.id === id) hit = it; });
+    if (!hit) {
+      say(id + '번 활동은 아직 없습니다. 번호를 다시 확인하세요.', true);
+      return;
+    }
+    say('여는 중입니다.', false);
+    location.href = pathOf(hit);
+  }
+  function say(text, isError) {
+    jumpMsg.textContent = text;
+    jumpMsg.setAttribute('data-error', !!isError);
+  }
+  jumpGo.addEventListener('click', jump);
+  jumpNum.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') jump();
+  });
+
+  /* ── 필터 버튼은 데이터에서 자동으로 생성 ── */
+  function uniq(key) {
+    var seen = [];
+    items.forEach(function (it) {
+      if (it[key] && seen.indexOf(it[key]) === -1) seen.push(it[key]);
+    });
+    return seen.sort();
+  }
+  function buildFilters(key) {
+    var group = document.createElement('div');
+    group.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;';
+    ['전체'].concat(uniq(key)).forEach(function (v) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.textContent = v;
+      b.setAttribute('aria-pressed', v === '전체');
+      b.addEventListener('click', function () {
+        state[key] = v;
+        Array.prototype.forEach.call(group.children, function (c) {
+          c.setAttribute('aria-pressed', c === b);
+        });
+        render();
+      });
+      group.appendChild(b);
+    });
+    filterBox.appendChild(group);
+  }
+  buildFilters('grade');
+  buildFilters('subject');
+
+  function matches(it) {
+    if (state.grade !== '전체' && it.grade !== state.grade) return false;
+    if (state.subject !== '전체' && it.subject !== state.subject) return false;
+    if (!state.q) return true;
+    var hay = [it.id, it.title, it.desc, it.grade, it.subject]
+      .concat(it.tags || []).join(' ').toLowerCase();
+    return hay.indexOf(state.q) !== -1;
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function card(it) {
+    var el = document.createElement('article');
+    el.className = 'card';
+    el.innerHTML =
+      '<span class="num">' + esc(it.id) + '</span>' +
+      '<h2 class="card-title"><a href="' + esc(pathOf(it)) + '">' + esc(it.title) + '</a></h2>' +
+      '<p class="card-desc">' + esc(it.desc || '') + '</p>' +
+      '<p class="meta"><b>' + esc(it.grade || '') + '</b> ' + esc(it.subject || '') +
+      '<button type="button" class="qr-btn">QR</button></p>';
+    el.querySelector('.qr-btn').addEventListener('click', function () { openQR(it); });
+    return el;
+  }
+
+  function render() {
+    var list = items.filter(matches).sort(function (a, b) {
+      return state.newest ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id);
+    });
+    sortBtn.textContent = state.newest ? '최신순' : '번호순';
+
+    if (!list.length) {
+      grid.innerHTML = '';
+      empty.hidden = false;
+      empty.innerHTML = '<h2>찾는 활동이 없습니다</h2><p>다른 낱말로 찾거나 필터를 ‘전체’로 되돌려 보세요.</p>';
+      return;
+    }
+    empty.hidden = true;
+    grid.innerHTML = '';
+    list.forEach(function (it) { grid.appendChild(card(it)); });
+  }
+
+  search.addEventListener('input', function () {
+    state.q = search.value.trim().toLowerCase();
+    render();
+  });
+  sortBtn.addEventListener('click', function () {
+    state.newest = !state.newest; render();
+  });
+
+  /* ── QR 창 ── */
+  var dlg = document.getElementById('qr-dialog');
+  var qrBox = document.getElementById('qr-code');
+  document.getElementById('qr-close').addEventListener('click', function () { dlg.close(); });
+
+  function openQR(it) {
+    document.getElementById('qr-title').textContent = it.title;
+    document.getElementById('qr-num').textContent = it.id + '번 · ' + (it.grade || '') + ' ' + (it.subject || '');
+    var url = urlOf(it);
+    document.getElementById('qr-url').textContent = url;
+    qrBox.innerHTML = '';
+    if (typeof QRCode === 'function') {
+      new QRCode(qrBox, { text: url, width: 220, height: 220, colorDark: '#17251E', colorLight: '#FCFCFA' });
+    } else {
+      qrBox.textContent = 'QR을 만들지 못했습니다. 아래 주소를 알려 주세요.';
+    }
+    if (typeof dlg.showModal === 'function') dlg.showModal();
+    else dlg.setAttribute('open', '');
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
