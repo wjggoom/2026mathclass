@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHAMPIONS LEAGUE - GRAND TV BOARD</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #05070f;
+            color: #f3f4f6;
+            overflow: hidden;
+        }
+        .font-sports {
+            font-family: 'Orbitron', 'Noto Sans KR', sans-serif;
+        }
+        /* 16:9 TV Layout Aspect Ratio */
+        .tv-container {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+            max-width: 1920px;
+            margin: 0 auto;
+        }
+        /* Neon texts and glows */
+        .neon-glow-cyan {
+            text-shadow: 0 0 20px rgba(6, 182, 212, 0.8), 0 0 40px rgba(6, 182, 212, 0.4);
+        }
+        .neon-glow-emerald {
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.4);
+        }
+        .neon-glow-rose {
+            text-shadow: 0 0 20px rgba(244, 63, 94, 0.8), 0 0 40px rgba(244, 63, 94, 0.4);
+        }
+        .neon-glow-yellow {
+            text-shadow: 0 0 20px rgba(234, 179, 8, 0.8), 0 0 40px rgba(234, 179, 8, 0.4);
+        }
+        /* Cinematic Stadium Shaking Animation */
+        @keyframes stadium-shake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-2px, 2px) rotate(-0.5deg); }
+            40% { transform: translate(2px, -1px) rotate(0.5deg); }
+            60% { transform: translate(-1px, -1px) rotate(-0.2deg); }
+            80% { transform: translate(2px, 1px) rotate(0.2deg); }
+        }
+        .shaking {
+            animation: stadium-shake 0.15s infinite;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-2 bg-slate-950">
+
+<div class="tv-container bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-950 rounded-3xl border-4 border-slate-800 shadow-2xl overflow-hidden flex flex-col justify-between p-6 relative">
+
+    <!-- Stadium BG Light effect -->
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-indigo-950/20 via-transparent to-transparent pointer-events-none"></div>
+
+    <!-- MAIN HEADER -->
+    <header class="relative z-10 flex justify-between items-center border-b border-slate-800/80 pb-3">
+        <div class="flex items-center gap-4">
+            <div class="bg-indigo-600 text-white px-3 py-1 rounded-lg font-black text-base tracking-wider font-sports flex items-center gap-2 shadow-lg">
+                <i class="fa-solid fa-trophy"></i>
+                <span>CHAMPIONS LEAGUE</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                <span>E-SPORTS LIVE BOARD</span>
+                <span class="text-indigo-400 font-light text-base">대형 TV 최적화 전광판</span>
+            </h1>
+        </div>
+
+        <!-- File Save / Restore / Backup Indicators -->
+        <div class="flex items-center gap-3 font-sports text-slate-400 text-sm">
+            <div class="flex items-center gap-2 mr-2">
+                <button onclick="saveToFile()" class="text-xs bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 px-3 py-1.5 rounded-xl border border-indigo-800/60 flex items-center gap-1.5 font-bold transition-all">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    <span>백업 저장</span>
+                </button>
+                <label class="text-xs bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 px-3 py-1.5 rounded-xl border border-emerald-800/60 flex items-center gap-1.5 font-bold cursor-pointer transition-all">
+                    <i class="fa-solid fa-file-import"></i>
+                    <span>복구하기</span>
+                    <input type="file" id="fileImportInput" accept=".json" onchange="loadFromFile(event)" class="hidden">
+                </label>
+            </div>
+            <div id="liveClock" class="bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-800 text-cyan-400 font-bold">12:00:00 PM</div>
+            <div id="currentStage" class="text-xs bg-indigo-950 text-indigo-300 px-3 py-1.5 rounded-lg border border-indigo-850 font-bold">SETUP MODE</div>
+        </div>
+    </header>
+
+    <!-- MAIN INTERACTIVE SCREENS CONTAINER -->
+    <main class="relative z-10 my-auto flex-1 flex items-center justify-center py-4 overflow-hidden">
+
+        <!-- ==================== SCREEN 1: TEAM & RULE SETUP ==================== -->
+        <section id="screenSetup" class="w-full h-full flex gap-6">
+            <!-- Left Config Panel -->
+            <div class="w-5/12 bg-slate-900/50 rounded-2xl border border-slate-800 p-5 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-3 text-cyan-400 flex items-center gap-2">
+                        <i class="fa-solid fa-users-gear"></i> 참가 팀 등록 & 대회 규칙 설정
+                    </h2>
+
+                    <!-- Form Details -->
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[11px] text-slate-400 block mb-1">팀 이름</label>
+                                <input type="text" id="inputTeamName" placeholder="예: 레알 마드리드" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500 transition-colors">
+                            </div>
+                            <div>
+                                <label class="text-[11px] text-slate-400 block mb-1">경기 시간 설정 (분)</label>
+                                <input type="number" id="inputGameTime" value="3" min="1" max="15" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-yellow-400 font-bold font-sports text-sm focus:outline-none focus:border-cyan-500 transition-colors">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[11px] text-slate-400 block mb-1">선수 1 이름</label>
+                                <input type="text" id="inputPlayer1" placeholder="선수 1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-xs focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[11px] text-slate-400 block mb-1">선수 2 이름</label>
+                                <input type="text" id="inputPlayer2" placeholder="선수 2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-xs focus:outline-none">
+                            </div>
+                        </div>
+
+                        <button onclick="addTeam()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-black py-2 rounded-lg transition-transform flex justify-center items-center gap-2 text-sm shadow-lg shadow-cyan-600/10">
+                            <i class="fa-solid fa-plus"></i> 신규 팀 등록
+                        </button>
+                    </div>
+
+                    <!-- Setup Parameters -->
+                    <div class="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-800/80">
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">사용 가능한 코트 수</label>
+                            <select id="courtSelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-cyan-400 font-bold text-xs focus:outline-none">
+                                <option value="1">1개 코트</option>
+                                <option value="2">2개 코트</option>
+                                <option value="3" selected>3개 코트 (추천)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">최대 진행 라운드 수</label>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" id="maxRoundInput" value="5" min="1" max="15" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-indigo-400 font-bold font-sports text-xs focus:outline-none">
+                                <span class="text-slate-500 text-xs shrink-0">RD</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fast preset options -->
+                <div class="border-t border-slate-800 pt-3">
+                    <span class="text-[10px] text-slate-400 block mb-1.5">신속 테스트용 샘플 팀 생성</span>
+                    <div class="flex gap-2">
+                        <button onclick="loadSampleTeams(8)" class="flex-1 bg-slate-800 hover:bg-slate-700 text-[11px] py-1.5 rounded-lg font-semibold transition-colors">8팀 생성</button>
+                        <button onclick="loadSampleTeams(9)" class="flex-1 bg-slate-800 hover:bg-slate-700 text-[11px] py-1.5 rounded-lg font-semibold transition-colors">9팀 (부전승 테스트)</button>
+                        <button onclick="clearAllTeams()" class="bg-red-950/40 border border-red-900/50 hover:bg-red-900/40 text-red-400 text-[11px] px-3.5 py-1.5 rounded-lg transition-colors">비우기</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Teams List Panel -->
+            <div class="w-7/12 bg-slate-900/50 rounded-2xl border border-slate-800 p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-list text-indigo-400"></i> 등록된 축구팀 명단
+                            <span id="teamCountBadge" class="bg-indigo-950 text-indigo-300 text-xs font-sports px-2 py-0.5 rounded-full border border-indigo-800/80">0 Teams</span>
+                        </h2>
+                    </div>
+
+                    <!-- Teams List Grid -->
+                    <div id="setupTeamsContainer" class="grid grid-cols-2 gap-2.5 max-h-[250px] overflow-y-auto pr-1">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Setup Launch footer -->
+                <div class="border-t border-slate-800 pt-3 flex items-center justify-between">
+                    <p class="text-[10px] text-amber-500/80 max-w-[60%] leading-relaxed">
+                        <i class="fa-solid fa-circle-info"></i> 라운드 매칭 알고리즘을 통해 자팀 대결 및 Unknown 생성이 배제되며, 경기 수가 부족한 팀은 부전승(승점+3, 골득실+3) 처리됩니다.
+                    </p>
+                    <button onclick="startDrawCeremony()" id="btnStartDraw" disabled class="bg-indigo-600 disabled:opacity-40 disabled:pointer-events-none hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl shadow-xl shadow-indigo-600/20 text-md tracking-wider flex items-center gap-2 transition-all">
+                        <span>대진 추첨식 개막</span>
+                        <i class="fa-solid fa-circle-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SCREEN 2: CEREMONIAL DRAW (MASSIVE CINEMA VIEW) ==================== -->
+        <section id="screenDraw" class="w-full h-full hidden flex flex-col justify-between relative overflow-hidden">
+            <!-- Fullscreen Cinematic Stadium backdrop with neon radial spotlights -->
+            <div id="cinemaFlashBg" class="absolute inset-0 bg-slate-950 transition-colors duration-200 pointer-events-none flex items-center justify-center">
+                <div class="absolute w-[600px] h-[600px] rounded-full bg-cyan-500/5 blur-[160px]"></div>
+                <div class="absolute w-[600px] h-[600px] rounded-full bg-emerald-500/5 blur-[160px] translate-x-40"></div>
+            </div>
+
+            <!-- Top Indicator Bar -->
+            <div class="relative z-10 text-center">
+                <div class="inline-block bg-indigo-950/80 border border-indigo-500/30 px-4 py-1.5 rounded-full text-indigo-400 uppercase tracking-widest text-xs font-black animate-pulse">
+                    CHAMPIONS CUP • LIVE DRAWS
+                </div>
+                <h3 class="text-xl font-bold mt-1 text-slate-400">초대형 스타디움 매치업 공개</h3>
+            </div>
+
+            <!-- Screen-filling giant typography match presenter (verbatim as watermarked_img_5579645865861228189.png) -->
+            <div class="relative z-10 flex-1 flex flex-col items-center justify-center my-2 select-none">
+                <div id="stadiumScreen" class="w-full max-w-5xl py-4 flex flex-col items-center justify-center text-center">
+
+                    <!-- Round / Court Label -->
+                    <div id="cinemaRoundLabel" class="text-yellow-400 font-sports font-black text-xl tracking-widest bg-yellow-950/60 border border-yellow-800/80 px-4 py-1 rounded-full mb-4">
+                        ROUND 1 - COURT 1
+                    </div>
+
+                    <!-- The GIANT Matchup display -->
+                    <div class="flex flex-col items-center justify-center w-full gap-2 px-6">
+
+                        <!-- HOME TEAM NAME (GIANT TEXT) -->
+                        <div class="w-full overflow-hidden py-1">
+                            <h2 id="cinemaHomeTeam" class="text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-cyan-400 uppercase neon-glow-cyan truncate">
+                                DONGNIM'S TEAM
+                            </h2>
+                            <p id="cinemaHomePlayers" class="text-slate-400 text-lg tracking-wider font-semibold">선수 명단 대기 중</p>
+                        </div>
+
+                        <!-- VS (GIANT TEXT) -->
+                        <div id="cinemaVsDivider" class="text-6xl md:text-7xl font-sports font-black italic tracking-tighter text-slate-100 py-1 flex items-center justify-center gap-4">
+                            <span class="h-[2px] w-24 bg-gradient-to-r from-transparent to-slate-500/60"></span>
+                            <span class="animate-pulse">VS</span>
+                            <span class="h-[2px] w-24 bg-gradient-to-l from-transparent to-slate-500/60"></span>
+                        </div>
+
+                        <!-- AWAY TEAM NAME (GIANT TEXT) -->
+                        <div class="w-full overflow-hidden py-1">
+                            <h2 id="cinemaAwayTeam" class="text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-emerald-400 uppercase neon-glow-emerald truncate">
+                                WON-VIBE FC
+                            </h2>
+                            <p id="cinemaAwayPlayers" class="text-slate-400 text-lg tracking-wider font-semibold">선수 명단 대기 중</p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Progress & Controls -->
+            <div class="relative z-10 flex items-center justify-between border-t border-slate-800/80 pt-3">
+                <div class="w-1/3 text-left">
+                    <span class="text-xs text-slate-500 block mb-1 font-sports">TOTAL DEPLOYED</span>
+                    <div class="flex items-center gap-3">
+                        <div class="w-32 bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
+                            <div id="drawProgressBar" class="h-full bg-gradient-to-r from-cyan-500 to-emerald-500" style="width: 0%"></div>
+                        </div>
+                        <span id="drawProgressText" class="text-xs text-indigo-400 font-sports font-bold">0 / 0 Matches</span>
+                    </div>
+                </div>
+
+                <div class="w-1/3 flex justify-center gap-3">
+                    <button onclick="triggerMatchReveal()" id="btnSingleDraw" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black px-5 py-3 rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-cyan-500/20">
+                        <i class="fa-solid fa-play"></i>
+                        <span>차례대로 1경기씩 공개</span>
+                    </button>
+                    <button onclick="triggerAutoMatchReveal()" id="btnAutoDraw" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-3 rounded-xl text-sm transition-colors">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>고속 전체 추첨</span>
+                    </button>
+                </div>
+
+                <div class="w-1/3 text-right">
+                    <button onclick="completeDrawAndStartLeague()" id="btnGoToDashboard" disabled class="bg-indigo-600 disabled:opacity-40 disabled:pointer-events-none hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl text-sm flex items-center gap-2 transition-all ml-auto">
+                        <span>실시간 전광판 입장</span>
+                        <i class="fa-solid fa-circle-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SCREEN 3: BROADCAST TV DASHBOARD ==================== -->
+        <section id="screenDashboard" class="w-full h-full hidden grid grid-cols-12 gap-5 overflow-hidden">
+
+            <!-- STANDINGS COLUMN (Left 4 cols) -->
+            <div class="col-span-4 bg-slate-900/40 rounded-2xl border border-slate-800/80 p-4 flex flex-col justify-between overflow-hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-lg font-bold text-cyan-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-ranking-star"></i> 리그 실시간 순위표
+                    </h3>
+                    <span class="text-[10px] text-slate-500 font-sports">LIVE STANDINGS</span>
+                </div>
+
+                <!-- Standing Table Container -->
+                <div class="flex-1 overflow-y-auto pr-1">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="text-slate-500 border-b border-slate-800 font-bold uppercase">
+                                <th class="pb-1.5 w-8 text-center">순위</th>
+                                <th class="pb-1.5">팀 정보</th>
+                                <th class="pb-1.5 text-center w-7">전</th>
+                                <th class="pb-1.5 text-center w-8">승점</th>
+                                <th class="pb-1.5 text-center w-8">득실</th>
+                            </tr>
+                        </thead>
+                        <tbody id="standingsTableBody" class="divide-y divide-slate-800/50">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Standing Info details -->
+                <div class="border-t border-slate-800/80 pt-2 mt-1.5 flex justify-between items-center text-[10px] text-slate-400">
+                    <span>승: 3점 | 무: 1점 | 패: 0점</span>
+                    <span class="text-cyan-400 font-bold">
+                        <i class="fa-solid fa-info-circle"></i> 팀명 터치 시 즉시 골 +1
+                    </span>
+                </div>
+            </div>
+
+            <!-- LIVE COURTS & TIMER COLUMN (Center 5 cols) -->
+            <div class="col-span-5 flex flex-col gap-3">
+
+                <!-- TOP MATCH TIMER ZONE -->
+                <div class="bg-slate-900/60 rounded-2xl border border-slate-800 p-3 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span>
+                        <span class="text-xs text-slate-300 font-bold">매치 경기 시간</span>
+                    </div>
+
+                    <!-- Digital Neon Timer Display -->
+                    <div class="flex items-center gap-4">
+                        <div id="gameTimerDisplay" class="font-sports font-black text-3xl tracking-wider text-yellow-400 neon-glow-yellow bg-slate-950 px-4 py-1 rounded-xl border border-slate-850">
+                            03:00
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="toggleTimer()" id="btnTimerPlay" class="w-8 h-8 rounded-lg bg-indigo-650 hover:bg-indigo-500 text-white flex items-center justify-center text-xs transition-colors">
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                            <button onclick="resetTimer()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center text-xs transition-colors">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COURT GRID CONTAINER -->
+                <div class="flex-1 flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+                            <i class="fa-solid fa-network-wired text-indigo-400"></i> 실시간 격돌 구장 현황
+                        </h3>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="prevRound()" class="bg-slate-850 hover:bg-slate-700 text-white w-6 h-6 rounded flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                            </button>
+                            <span id="roundIndicator" class="font-sports font-bold text-indigo-400 text-xs bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-850">ROUND 1 / 5</span>
+                            <button onclick="nextRound()" class="bg-slate-850 hover:bg-slate-700 text-white w-6 h-6 rounded flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 3 Courts Grid -->
+                    <div class="grid grid-rows-3 gap-2.5 flex-1 mt-1">
+
+                        <!-- COURT 1 -->
+                        <div class="bg-slate-900/40 rounded-xl border border-slate-800 p-3 flex flex-col justify-between relative overflow-hidden">
+                            <span class="absolute top-1.5 left-2 px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-400 text-[8px] font-black tracking-widest font-sports border border-cyan-800/40">COURT 1</span>
+                            <div id="court1Container" class="flex items-center justify-between mt-3 flex-1">
+                                <!-- JS Injection -->
+                            </div>
+                        </div>
+
+                        <!-- COURT 2 -->
+                        <div class="bg-slate-900/40 rounded-xl border border-slate-800 p-3 flex flex-col justify-between relative overflow-hidden">
+                            <span class="absolute top-1.5 left-2 px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 text-[8px] font-black tracking-widest font-sports border border-emerald-800/40">COURT 2</span>
+                            <div id="court2Container" class="flex items-center justify-between mt-3 flex-1">
+                                <!-- JS Injection -->
+                            </div>
+                        </div>
+
+                        <!-- COURT 3 -->
+                        <div class="bg-slate-900/40 rounded-xl border border-slate-800 p-3 flex flex-col justify-between relative overflow-hidden">
+                            <span class="absolute top-1.5 left-2 px-1.5 py-0.5 rounded bg-indigo-950/80 text-indigo-400 text-[8px] font-black tracking-widest font-sports border border-indigo-800/40">COURT 3</span>
+                            <div id="court3Container" class="flex items-center justify-between mt-3 flex-1">
+                                <!-- JS Injection -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- PENDING SCHEDULES & RESTING TEAMS COLUMN (Right 3 cols) -->
+            <div class="col-span-3 flex flex-col justify-between bg-slate-900/40 rounded-2xl border border-slate-800 p-4 overflow-hidden">
+                <div class="flex flex-col h-full justify-between gap-3">
+
+                    <!-- CURRENT ROUND RESTING TEAMS (쉬는 팀) -->
+                    <div class="flex-1 flex flex-col overflow-hidden max-h-[140px] border-b border-slate-800/80 pb-2">
+                        <h4 class="text-xs font-bold text-rose-400 mb-1.5 flex items-center gap-1.5">
+                            <i class="fa-solid fa-mug-hot"></i> 현재 라운드 쉬는 팀 (Resting)
+                        </h4>
+                        <div id="restingTeamsList" class="overflow-y-auto space-y-1.5 pr-1 flex-1">
+                            <!-- JS Injection -->
+                        </div>
+                    </div>
+
+                    <!-- NEXT ROUND MATCHES QUEUE (다음 라운드 대기 경기) -->
+                    <div class="flex-[2_2_0%] flex flex-col overflow-hidden">
+                        <h4 id="queueHeaderTitle" class="text-xs font-bold text-cyan-400 mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-angles-right"></i> 다음 라운드 일정 대기열
+                        </h4>
+                        <div id="nextMatchesList" class="flex-1 space-y-1.5 overflow-y-auto pr-1">
+                            <!-- JS Injection -->
+                        </div>
+                    </div>
+
+                    <!-- Progress and Controls Info -->
+                    <div class="border-t border-slate-800/80 pt-2 space-y-2">
+                        <div class="flex justify-between items-center text-[10px] text-slate-400">
+                            <span>총 배치 경기수:</span>
+                            <span id="dashboardTotalMatches" class="font-sports font-bold text-white">0</span>
+                        </div>
+                        <div class="flex justify-between items-center text-[10px] text-slate-400">
+                            <span>진행 완료된 경기:</span>
+                            <span id="dashboardCompletedMatches" class="font-sports font-bold text-emerald-400">0</span>
+                        </div>
+
+                        <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+                            <div id="leagueProgressBar" class="h-full bg-cyan-500 transition-all duration-300" style="width: 0%"></div>
+                        </div>
+
+                        <button onclick="confirmReset()" class="w-full bg-slate-950 hover:bg-rose-950/40 hover:text-rose-400 border border-slate-800 hover:border-rose-900 py-1.5 rounded-lg text-[10px] font-semibold transition-all flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-rotate-left"></i> 대진표 및 리그 초기화
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- TV FOOTER TICKER -->
+    <footer class="relative z-10 border-t border-slate-800/80 pt-2.5 flex justify-between items-center text-[11px] text-slate-500">
+        <div class="flex items-center gap-2">
+            <span class="bg-indigo-950 border border-indigo-850 text-[9px] text-indigo-400 px-2 py-0.5 rounded font-black tracking-widest uppercase font-sports">INFO TAPE</span>
+            <div class="w-[450px] overflow-hidden whitespace-nowrap relative">
+                <div class="inline-block animate-[marquee_25s_linear_infinite] hover:pause text-slate-400">
+                    🏆 부전승(BYE) 혜택: 홀수 팀 수립 시, 매 라운드 자동 부전승 팀에게 승점 3점과 부전승 골득실 점수(+3점)가 균등하게 부여됩니다. 언제든 오프라인 환경에서 상단의 "백업 저장"을 사용하여 데이터를 가져가세요.
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="font-sports font-bold text-[10px] text-slate-400">TV SPORTS BROADCAST STADIUM CONSOLE</span>
+            <span class="h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
+        </div>
+    </footer>
+
+</div>
+
+<!-- ==================== DIALOG MODALS SECTION ==================== -->
+
+<!-- Modal: Edit Team Details -->
+<div id="editTeamModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
+    <div class="bg-slate-900 border-2 border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl relative">
+        <button onclick="closeEditTeamModal()" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="text-center mb-3">
+            <span class="text-[10px] font-black tracking-widest text-cyan-400 bg-cyan-950 border border-cyan-800/80 px-2.5 py-0.5 rounded-full uppercase font-sports">EDIT MEMBER</span>
+            <h3 class="text-lg font-black text-white mt-2">참가 팀 세부 정보 수정</h3>
+            <p class="text-slate-400 text-[11px]">실시간 대진표 및 팀원 이름 목록을 자유롭게 변경합니다.</p>
+        </div>
+
+        <div class="space-y-3 my-4 text-left">
+            <input type="hidden" id="editTeamId">
+            <div>
+                <label class="text-[11px] text-slate-400 block mb-1">팀명</label>
+                <input type="text" id="editTeamName" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[11px] text-slate-400 block mb-1">선수 1</label>
+                    <input type="text" id="editPlayer1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-xs focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-[11px] text-slate-400 block mb-1">선수 2</label>
+                    <input type="text" id="editPlayer2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-xs focus:outline-none">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="closeEditTeamModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg text-xs transition-colors">취소</button>
+            <button onclick="saveEditedTeam()" class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-black py-2 rounded-lg text-xs transition-all">
+                수정 사항 반영
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Box Container -->
+<div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+<!-- SOUND AND ACTION SCRIPT -->
+<script>
+    // --- WEBAUDIO DIGITAL SYNTHESIS FOR SFX ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        try {
+            if (type === 'drumroll') {
+                // High tension rising roll
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 1.2);
+
+                let lfo = audioCtx.createOscillator();
+                let lfoGain = audioCtx.createGain();
+                lfo.frequency.value = 30;
+                lfoGain.gain.value = 25;
+
+                lfo.connect(lfoGain);
+                lfoGain.connect(osc.frequency);
+
+                gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 1.0);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                lfo.start();
+                osc.start();
+                lfo.stop(audioCtx.currentTime + 1.2);
+                osc.stop(audioCtx.currentTime + 1.2);
+            } else if (type === 'crash') {
+                // Large flash/hit sound
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.6);
+
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.6);
+            } else if (type === 'buzzer') {
+                // Dramatic game-over buzzer played 3 times
+                let playBuzzerSub = (timeOffset) => {
+                    let osc = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(110, audioCtx.currentTime + timeOffset);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime + timeOffset);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + timeOffset + 0.5);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(audioCtx.currentTime + timeOffset);
+                    osc.stop(audioCtx.currentTime + timeOffset + 0.5);
+                };
+                playBuzzerSub(0.0);
+                playBuzzerSub(0.4);
+                playBuzzerSub(0.8);
+            } else if (type === 'click') {
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            }
+        } catch (e) {
+            console.log("Audio contexts active", e);
+        }
+    }
+
+    // --- APPLICATION STATE ---
+    let state = {
+        teams: [],
+        matches: [],
+        courtsCount: 3,
+        maxRounds: 5,
+        currentRound: 1,
+        drawIndex: 0,
+        drawMatches: [],
+        matchTimeLimit: 180 // Default 3 minutes in seconds
+    };
+
+    let currentScreenId = 'screenSetup';
+
+    // Timer specific globals
+    let timerInterval = null;
+    let isTimerRunning = false;
+    let timerSecondsLeft = 180;
+
+    const samplePool = [
+        { name: "레알 마드리드", p1: "음바페", p2: "벨링엄" },
+        { name: "맨체스터 시티", p1: "홀란드", p2: "덕배" },
+        { name: "바이에른 뮌헨", p1: "케인", p2: "김민재" },
+        { name: "파리 생제르맹", p1: "이강인", p2: "뎀벨레" },
+        { name: "토트넘 홋스퍼", p1: "손흥민", p2: "매디슨" },
+        { name: "아스날 FC", p1: "사카", p2: "외데고르" },
+        { name: "바르셀로나", p1: "레반", p2: "야말" },
+        { name: "리버풀 FC", p1: "살라", p2: "반다이크" },
+        { name: "아틀레티코", p1: "그리즈만", p2: "알바레스" },
+        { name: "유벤투스", p1: "블라호비치", p2: "이을디즈" }
+    ];
+
+    window.onload = function() {
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('liveClock').textContent = now.toLocaleTimeString('ko-KR');
+        }, 1000);
+
+        loadSampleTeams(8, false);
+    };
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `px-4 py-2.5 rounded-xl border font-bold text-xs shadow-xl flex items-center gap-2 transition-all transform translate-y-2 animate-bounce bg-slate-900 ${
+            type === 'success' ? 'border-emerald-500 text-emerald-400' : 'border-cyan-500 text-cyan-400'
+        }`;
+        toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-info'}"></i> <span>${message}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 2500);
+    }
+
+    function navigateTo(screenId) {
+        currentScreenId = screenId;
+        document.getElementById('screenSetup').classList.add('hidden');
+        document.getElementById('screenDraw').classList.add('hidden');
+        document.getElementById('screenDashboard').classList.add('hidden');
+
+        document.getElementById(screenId).classList.remove('hidden');
+
+        const badge = document.getElementById('currentStage');
+        if (screenId === 'screenSetup') {
+            badge.textContent = 'SETUP MODE';
+            badge.className = 'text-xs bg-indigo-950 text-indigo-300 px-3 py-1.5 rounded-lg border border-indigo-800 font-bold';
+        } else if (screenId === 'screenDraw') {
+            badge.textContent = 'LIVE DRAWS';
+            badge.className = 'text-xs bg-amber-950 text-amber-300 px-3 py-1.5 rounded-lg border border-amber-800 font-bold';
+            updateDrawProgressIndicator();
+        } else if (screenId === 'screenDashboard') {
+            badge.textContent = 'LIVE BOARD';
+            badge.className = 'text-xs bg-cyan-950 text-cyan-300 px-3 py-1.5 rounded-lg border border-cyan-850 font-bold';
+        }
+    }
+
+    function updateSetupTeamsList() {
+        const container = document.getElementById('setupTeamsContainer');
+        const badge = document.getElementById('teamCountBadge');
+        badge.textContent = `${state.teams.length} Teams`;
+
+        if (state.teams.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-2 text-center py-10 text-slate-500 text-xs">
+                    <i class="fa-solid fa-users text-3xl mb-2 block opacity-30"></i>
+                    참가 팀이 아직 등록되지 않았습니다.
+                </div>
+            `;
+            document.getElementById('btnStartDraw').disabled = true;
+            return;
+        }
+
+        container.innerHTML = state.teams.map((t, idx) => `
+            <div class="bg-slate-950 border border-slate-850 rounded-xl p-2.5 flex justify-between items-center group hover:border-indigo-500/40 transition-all">
+                <div class="flex items-center gap-2 overflow-hidden">
+                    <div class="w-6 h-6 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-sports font-black text-[10px] shrink-0">
+                        ${idx + 1}
+                    </div>
+                    <div class="overflow-hidden">
+                        <h4 class="font-bold text-white truncate text-xs">${t.name}</h4>
+                        <p class="text-[10px] text-slate-400 truncate">${t.player1} / ${t.player2}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="openEditTeamModal(${t.id})" class="text-cyan-400 hover:text-cyan-300 p-1">
+                        <i class="fa-solid fa-pen-to-square text-xs"></i>
+                    </button>
+                    <button onclick="removeTeam(${t.id})" class="text-slate-500 hover:text-rose-400 p-1">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('btnStartDraw').disabled = state.teams.length < 2;
+    }
+
+    function addTeam() {
+        const tInput = document.getElementById('inputTeamName');
+        const p1Input = document.getElementById('inputPlayer1');
+        const p2Input = document.getElementById('inputPlayer2');
+
+        const name = tInput.value.trim();
+        const p1 = p1Input.value.trim() || '선수A';
+        const p2 = p2Input.value.trim() || '선수B';
+
+        if (!name) {
+            showToast("팀 이름을 명확하게 지정해주세요!");
+            return;
+        }
+
+        const newTeam = {
+            id: Date.now() + Math.random(),
+            name: name,
+            player1: p1,
+            player2: p2
+        };
+
+        state.teams.push(newTeam);
+        updateSetupTeamsList();
+
+        tInput.value = '';
+        p1Input.value = '';
+        p2Input.value = '';
+        showToast(`'${name}' 팀이 목록에 등록되었습니다.`, 'success');
+        playSound('click');
+    }
+
+    function removeTeam(id) {
+        state.teams = state.teams.filter(t => t.id !== id);
+        updateSetupTeamsList();
+        playSound('click');
+    }
+
+    function clearAllTeams() {
+        state.teams = [];
+        updateSetupTeamsList();
+    }
+
+    function loadSampleTeams(count, notify = true) {
+        state.teams = [];
+        for (let i = 0; i < count; i++) {
+            const p = samplePool[i % samplePool.length];
+            state.teams.push({
+                id: i + 1000,
+                name: p.name,
+                player1: p.p1,
+                player2: p.p2
+            });
+        }
+        updateSetupTeamsList();
+        if (notify) {
+            showToast(`${count}개의 샘플 구단이 성공적으로 소집되었습니다.`, 'success');
+        }
+    }
+
+    function openEditTeamModal(id) {
+        const t = state.teams.find(team => team.id === id);
+        if (!t) return;
+
+        document.getElementById('editTeamId').value = t.id;
+        document.getElementById('editTeamName').value = t.name;
+        document.getElementById('editPlayer1').value = t.player1;
+        document.getElementById('editPlayer2').value = t.player2;
+
+        document.getElementById('editTeamModal').classList.remove('hidden');
+        playSound('click');
+    }
+
+    function closeEditTeamModal() {
+        document.getElementById('editTeamModal').classList.add('hidden');
+    }
+
+    function saveEditedTeam() {
+        const id = parseFloat(document.getElementById('editTeamId').value);
+        const name = document.getElementById('editTeamName').value.trim();
+        const p1 = document.getElementById('editPlayer1').value.trim();
+        const p2 = document.getElementById('editPlayer2').value.trim();
+
+        if (!name) {
+            showToast("팀 이름은 필수입니다!");
+            return;
+        }
+
+        const t = state.teams.find(team => team.id === id);
+        if (t) {
+            t.name = name;
+            t.player1 = p1;
+            t.player2 = p2;
+            updateSetupTeamsList();
+            showToast("팀 세부 내역이 업데이트되었습니다.", "success");
+            closeEditTeamModal();
+            playSound('crash');
+        }
+    }
+
+    function buildStrictRoundRobinSchedule() {
+        let activeTeams = [...state.teams];
+        let n = activeTeams.length;
+        if (n < 2) return [];
+
+        let isOdd = n % 2 !== 0;
+        const dummyByeId = -1;
+        if (isOdd) {
+            activeTeams.push({ id: dummyByeId, name: "BYE_REST_DUMMY", player1: "", player2: "" });
+            n++;
+        }
+
+        let standardRoundsCount = n - 1;
+        let halfSize = n / 2;
+        let baseRounds = [];
+
+        // Generate base Round Robin cycle (Berger/Circle Method)
+        for (let r = 0; r < standardRoundsCount; r++) {
+            let roundPairs = [];
+            for (let i = 0; i < halfSize; i++) {
+                let homeIdx = (r + i) % (n - 1);
+                let awayIdx = (n - 1 - i + r) % (n - 1);
+                if (i === 0) {
+                    awayIdx = n - 1;
+                }
+                roundPairs.push({
+                    home: activeTeams[homeIdx],
+                    away: activeTeams[awayIdx]
+                });
+            }
+            baseRounds.push(roundPairs);
+        }
+
+        let scheduled = [];
+        let rIndex = 1;
+        let countId = 0;
+
+        // Populate matches up to state.maxRounds (repeating pattern if maxRounds exceeds base rounds)
+        for (let r = 0; r < state.maxRounds; r++) {
+            let baseRoundData = baseRounds[r % standardRoundsCount];
+            let courtTracker = 1;
+
+            baseRoundData.forEach(pair => {
+                let isBye = false;
+                let byeTeamId = null;
+
+                if (pair.home.id === dummyByeId) {
+                    isBye = true;
+                    byeTeamId = pair.away.id;
+                } else if (pair.away.id === dummyByeId) {
+                    isBye = true;
+                    byeTeamId = pair.home.id;
+                }
+
+                if (isBye) {
+                    // Bye matches are immediately handled. Resting team gets auto points!
+                    scheduled.push({
+                        id: Date.now() + Math.random() + countId++,
+                        round: rIndex,
+                        isByeMatch: true,
+                        byeTeamId: byeTeamId,
+                        homeTeamId: null,
+                        awayTeamId: null,
+                        courtNum: null,
+                        homeScore: 3, // Defaults to 3-0 walkover win
+                        awayScore: 0,
+                        isPlayed: true
+                    });
+                } else {
+                    scheduled.push({
+                        id: Date.now() + Math.random() + countId++,
+                        round: rIndex,
+                        isByeMatch: false,
+                        byeTeamId: null,
+                        homeTeamId: pair.home.id,
+                        awayTeamId: pair.away.id,
+                        courtNum: courtTracker,
+                        homeScore: 0,
+                        awayScore: 0,
+                        isPlayed: false
+                    });
+                    courtTracker++;
+                }
+            });
+            rIndex++;
+        }
+
+        return scheduled;
+    }
+
+    function startDrawCeremony() {
+        state.courtsCount = parseInt(document.getElementById('courtSelect').value);
+        state.maxRounds = parseInt(document.getElementById('maxRoundInput').value) || 5;
+        state.matchTimeLimit = (parseInt(document.getElementById('inputGameTime').value) || 3) * 60;
+
+        timerSecondsLeft = state.matchTimeLimit;
+
+        state.drawIndex = 0;
+        state.matches = buildStrictRoundRobinSchedule();
+
+        // Filter out non-bye matches for the actual reveal ceremony
+        state.drawMatches = state.matches.filter(m => !m.isByeMatch);
+
+        // Reset Cinema Interface text
+        document.getElementById('cinemaRoundLabel').textContent = "MATCH #1 REVEAL";
+        document.getElementById('cinemaHomeTeam').textContent = "DRAWING TEAM A";
+        document.getElementById('cinemaHomePlayers').textContent = "-";
+        document.getElementById('cinemaVsDivider').classList.remove('neon-glow-rose');
+        document.getElementById('cinemaAwayTeam').textContent = "DRAWING TEAM B";
+        document.getElementById('cinemaAwayPlayers').textContent = "-";
+
+        document.getElementById('btnSingleDraw').disabled = false;
+        document.getElementById('btnAutoDraw').disabled = false;
+        document.getElementById('btnGoToDashboard').disabled = true;
+
+        navigateTo('screenDraw');
+        playSound('crash');
+    }
+
+    function updateDrawProgressIndicator() {
+        const total = state.drawMatches.length;
+        const current = state.drawIndex;
+        const pct = total > 0 ? (current / total) * 100 : 0;
+
+        document.getElementById('drawProgressText').textContent = `${current} / ${total} Matches`;
+        document.getElementById('drawProgressBar').style.width = `${pct}%`;
+    }
+
+    function triggerMatchReveal() {
+        if (state.drawIndex >= state.drawMatches.length) {
+            showToast("모든 경기 대진표가 성황리에 공개되었습니다!");
+            return;
+        }
+
+        const btnSingle = document.getElementById('btnSingleDraw');
+        const btnAuto = document.getElementById('btnAutoDraw');
+        btnSingle.disabled = true;
+        btnAuto.disabled = true;
+
+        playSound('drumroll');
+
+        // Cinematic flash shaking effect
+        const displayScreen = document.getElementById('stadiumScreen');
+        const flashBg = document.getElementById('cinemaFlashBg');
+        displayScreen.classList.add('shaking');
+        flashBg.classList.add('bg-cyan-950/30');
+
+        let intervalTicks = 0;
+        const shuffleAnim = setInterval(() => {
+            const tempHome = state.teams[Math.floor(Math.random() * state.teams.length)];
+            let tempAway = state.teams[Math.floor(Math.random() * state.teams.length)];
+            while (tempHome.id === tempAway.id) {
+                tempAway = state.teams[Math.floor(Math.random() * state.teams.length)];
+            }
+
+            document.getElementById('cinemaHomeTeam').textContent = tempHome.name;
+            document.getElementById('cinemaAwayTeam').textContent = tempAway.name;
+            intervalTicks++;
+        }, 60);
+
+        setTimeout(() => {
+            clearInterval(shuffleAnim);
+            displayScreen.classList.remove('shaking');
+            flashBg.classList.remove('bg-cyan-950/30');
+
+            const match = state.drawMatches[state.drawIndex];
+            const home = state.teams.find(t => t.id === match.homeTeamId);
+            const away = state.teams.find(t => t.id === match.awayTeamId);
+
+            // Giant Neon Reveal
+            document.getElementById('cinemaRoundLabel').textContent = `ROUND ${match.round} - COURT ${match.courtNum}`;
+
+            const hElem = document.getElementById('cinemaHomeTeam');
+            hElem.textContent = home.name;
+            document.getElementById('cinemaHomePlayers').textContent = `${home.player1} & ${home.player2}`;
+
+            const aElem = document.getElementById('cinemaAwayTeam');
+            aElem.textContent = away.name;
+            document.getElementById('cinemaAwayPlayers').textContent = `${away.player1} & ${away.player2}`;
+
+            playSound('crash');
+            state.drawIndex++;
+            updateDrawProgressIndicator();
+
+            if (state.drawIndex < state.drawMatches.length) {
+                btnSingle.disabled = false;
+                btnAuto.disabled = false;
+            } else {
+                document.getElementById('btnGoToDashboard').disabled = false;
+                showToast("리그 총 매칭 편성이 완료되었습니다!", "success");
+            }
+        }, 1200);
+    }
+
+    function triggerAutoMatchReveal() {
+        const interval = setInterval(() => {
+            if (state.drawIndex < state.drawMatches.length) {
+                state.drawIndex++;
+                updateDrawProgressIndicator();
+                playSound('click');
+            } else {
+                clearInterval(interval);
+
+                // Final match preview
+                const lastMatch = state.drawMatches[state.drawMatches.length - 1];
+                const home = state.teams.find(t => t.id === lastMatch.homeTeamId);
+                const away = state.teams.find(t => t.id === lastMatch.awayTeamId);
+
+                document.getElementById('cinemaRoundLabel').textContent = `ROUND ${lastMatch.round} - COURT ${lastMatch.courtNum}`;
+                document.getElementById('cinemaHomeTeam').textContent = home.name;
+                document.getElementById('cinemaHomePlayers').textContent = `${home.player1} / ${home.player2}`;
+                document.getElementById('cinemaAwayTeam').textContent = away.name;
+                document.getElementById('cinemaAwayPlayers').textContent = `${away.player1} / ${away.player2}`;
+
+                document.getElementById('btnSingleDraw').disabled = true;
+                document.getElementById('btnAutoDraw').disabled = true;
+                document.getElementById('btnGoToDashboard').disabled = false;
+
+                showToast("전체 대진 매칭 고속 스캔 완료!", "success");
+                playSound('crash');
+            }
+        }, 80);
+    }
+
+    function completeDrawAndStartLeague() {
+        state.currentRound = 1;
+        resetTimer();
+        updateDashboard();
+        navigateTo('screenDashboard');
+    }
+
+    // --- DASHBOARD RENDER MANAGEMENT ---
+    function updateDashboard() {
+        updateStandings();
+        updateActiveCourts();
+        updateQueueAndRestingTeams();
+        updateProgressPanel();
+    }
+
+    function updateProgressPanel() {
+        const total = state.matches.filter(m => !m.isByeMatch).length;
+        const played = state.matches.filter(m => !m.isByeMatch && m.isPlayed).length;
+        const pct = total > 0 ? (played / total) * 100 : 0;
+
+        document.getElementById('dashboardTotalMatches').textContent = total;
+        document.getElementById('dashboardCompletedMatches').textContent = played;
+        document.getElementById('leagueProgressBar').style.width = `${pct}%`;
+    }
+
+    function updateStandings() {
+        let stats = {};
+        state.teams.forEach(t => {
+            stats[t.id] = { played: 0, won: 0, drawn: 0, lost: 0, points: 0, gf: 0, ga: 0, gd: 0 };
+        });
+
+        state.matches.forEach(m => {
+            if (!m.isPlayed) return;
+
+            if (m.isByeMatch) {
+                // Bye matches earn 1 play, 1 win, 3 pts, 3GF (Auto Bye points)
+                stats[m.byeTeamId].played++;
+                stats[m.byeTeamId].won++;
+                stats[m.byeTeamId].points += 3;
+                stats[m.byeTeamId].gf += 3;
+                stats[m.byeTeamId].gd += 3;
+            } else {
+                stats[m.homeTeamId].played++;
+                stats[m.awayTeamId].played++;
+
+                stats[m.homeTeamId].gf += m.homeScore;
+                stats[m.homeTeamId].ga += m.awayScore;
+                stats[m.awayTeamId].gf += m.awayScore;
+                stats[m.awayTeamId].ga += m.homeScore;
+
+                if (m.homeScore > m.awayScore) {
+                    stats[m.homeTeamId].won++;
+                    stats[m.homeTeamId].points += 3;
+                    stats[m.awayTeamId].lost++;
+                } else if (m.homeScore < m.awayScore) {
+                    stats[m.awayTeamId].won++;
+                    stats[m.awayTeamId].points += 3;
+                    stats[m.homeTeamId].lost++;
+                } else {
+                    stats[m.homeTeamId].drawn++;
+                    stats[m.homeTeamId].points += 1;
+                    stats[m.awayTeamId].drawn++;
+                    stats[m.awayTeamId].points += 1;
+                }
+            }
+        });
+
+        state.teams.forEach(t => {
+            stats[t.id].gd = stats[t.id].gf - stats[t.id].ga;
+        });
+
+        let sorted = [...state.teams].sort((a, b) => {
+            if (stats[b.id].points !== stats[a.id].points) {
+                return stats[b.id].points - stats[a.id].points;
+            }
+            if (stats[b.id].gd !== stats[a.id].gd) {
+                return stats[b.id].gd - stats[a.id].gd;
+            }
+            return stats[b.id].gf - stats[a.id].gf;
+        });
+
+        const tbody = document.getElementById('standingsTableBody');
+        tbody.innerHTML = sorted.map((team, idx) => {
+            const s = stats[team.id];
+            let badge = `${idx + 1}`;
+            let rowBg = "hover:bg-slate-800/35";
+
+            if (idx === 0) {
+                badge = `<span class="w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-black flex items-center justify-center text-[10px] shadow-md shadow-amber-500/20">1</span>`;
+                rowBg += " bg-amber-950/10";
+            } else if (idx === 1) {
+                badge = `<span class="w-5 h-5 rounded-full bg-slate-300 text-slate-950 font-black flex items-center justify-center text-[10px] shadow-md shadow-slate-300/10">2</span>`;
+            } else if (idx === 2) {
+                badge = `<span class="w-5 h-5 rounded-full bg-amber-700 text-white font-black flex items-center justify-center text-[10px]">3</span>`;
+            }
+
+            return `
+                <tr class="${rowBg} transition-colors">
+                    <td class="py-2 text-center font-sports font-bold text-slate-400">${badge}</td>
+                    <td class="py-2 font-bold text-white max-w-[130px] truncate">
+                        <div class="truncate text-xs">${team.name}</div>
+                        <div class="text-[9px] text-slate-400 font-normal truncate">${team.player1} & ${team.player2}</div>
+                    </td>
+                    <td class="py-2 text-center font-sports text-slate-400 text-xs">${s.played}</td>
+                    <td class="py-2 text-center font-sports font-black text-cyan-400 text-sm">${s.points}</td>
+                    <td class="py-2 text-center font-sports text-slate-400 text-xs">${s.gd > 0 ? '+' + s.gd : s.gd}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function updateActiveCourts() {
+        const roundMatches = state.matches.filter(m => m.round === state.currentRound);
+        const totalRds = Math.max(...state.matches.map(m => m.round), 1);
+
+        document.getElementById('roundIndicator').textContent = `ROUND ${state.currentRound} / ${totalRds}`;
+        const getT = (id) => state.teams.find(team => team.id === id);
+
+        for (let courtNum = 1; courtNum <= 3; courtNum++) {
+            const container = document.getElementById(`court${courtNum}Container`);
+            const match = roundMatches.find(m => m.courtNum === courtNum && !m.isByeMatch);
+
+            if (courtNum > state.courtsCount) {
+                container.innerHTML = `
+                    <div class="w-full text-center py-5 text-slate-600 font-bold text-[11px] flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-ban"></i> 비가동 구장 (설정 외)
+                    </div>
+                `;
+                continue;
+            }
+
+            if (!match) {
+                container.innerHTML = `
+                    <div class="w-full text-center py-5 text-slate-500 font-semibold text-[11px] flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-hourglass-empty"></i> 배정된 경기가 없습니다.
+                    </div>
+                `;
+                continue;
+            }
+
+            const home = getT(match.homeTeamId);
+            const away = getT(match.awayTeamId);
+
+            if (!home || !away) continue;
+
+            container.innerHTML = `
+                <!-- Home Box (Click to Score +1) -->
+                <div onclick="adjustLiveScore(${match.id}, 'home', 1)" class="w-[38%] text-right overflow-hidden pr-3 cursor-pointer group active:scale-95 transition-transform select-none">
+                    <h4 class="font-black text-white text-base md:text-2xl tracking-tight truncate group-hover:text-cyan-400 transition-colors uppercase">${home.name}</h4>
+                    <span class="text-[10px] md:text-xs text-slate-400 block truncate font-medium mt-0.5">${home.player1} & ${home.player2}</span>
+                </div>
+
+                <!-- Match Score Indicators (Giant Font) -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="adjustLiveScore(${match.id}, 'home', -1)" class="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-white font-black flex items-center justify-center text-xs md:text-sm transition-colors shadow-lg" title="득점 차감">-</button>
+
+                    <div class="flex items-center gap-3 bg-slate-950 px-4 py-1.5 rounded-xl border border-slate-850 shadow-inner">
+                        <span class="text-3xl md:text-5xl font-sports font-black text-cyan-400 neon-glow-cyan tracking-wider min-w-[32px] text-center">${match.homeScore}</span>
+                        <span class="text-slate-600 font-black text-xs tracking-widest font-sports">VS</span>
+                        <span class="text-3xl md:text-5xl font-sports font-black text-cyan-400 neon-glow-cyan tracking-wider min-w-[32px] text-center">${match.awayScore}</span>
+                    </div>
+
+                    <button onclick="adjustLiveScore(${match.id}, 'away', -1)" class="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-white font-black flex items-center justify-center text-xs md:text-sm transition-colors shadow-lg" title="득점 차감">-</button>
+                </div>
+
+                <!-- Away Box (Click to Score +1) -->
+                <div onclick="adjustLiveScore(${match.id}, 'away', 1)" class="w-[38%] text-left overflow-hidden pl-3 cursor-pointer group active:scale-95 transition-transform select-none">
+                    <h4 class="font-black text-white text-base md:text-2xl tracking-tight truncate group-hover:text-cyan-400 transition-colors uppercase">${away.name}</h4>
+                    <span class="text-[10px] md:text-xs text-slate-400 block truncate font-medium mt-0.5">${away.player1} & ${away.player2}</span>
+                </div>
+            `;
+        }
+    }
+
+    function adjustLiveScore(matchId, side, val) {
+        const match = state.matches.find(m => m.id === matchId);
+        if (!match) return;
+
+        if (side === 'home') {
+            match.homeScore += val;
+            if (match.homeScore < 0) match.homeScore = 0;
+        } else {
+            match.awayScore += val;
+            if (match.awayScore < 0) match.awayScore = 0;
+        }
+
+        match.isPlayed = true;
+        playSound('click');
+        updateDashboard();
+    }
+
+    function updateQueueAndRestingTeams() {
+        const getT = (id) => state.teams.find(team => team.id === id);
+
+        // Calculate Resting Teams (쉬는 팀) in current round
+        // A team is resting if they are NOT playing in any active non-bye matches of currentRound.
+        const currentRoundMatches = state.matches.filter(m => m.round === state.currentRound);
+        let activePlayingIds = new Set();
+
+        currentRoundMatches.forEach(m => {
+            if (!m.isByeMatch) {
+                activePlayingIds.add(m.homeTeamId);
+                activePlayingIds.add(m.awayTeamId);
+            }
+        });
+
+        // Bye dummy logic rests as well (award Bye status)
+        let restingTeams = state.teams.filter(t => !activePlayingIds.has(t.id));
+        const restingList = document.getElementById('restingTeamsList');
+
+        if (restingTeams.length === 0) {
+            restingList.innerHTML = `
+                <div class="text-[10px] text-slate-500 italic py-2 text-center">이번 라운드는 전 팀 출전 중!</div>
+            `;
+        } else {
+            restingList.innerHTML = restingTeams.map(t => {
+                // Check if they are officially a "Bye Match" winner this round
+                const hasByeMatch = currentRoundMatches.some(m => m.isByeMatch && m.byeTeamId === t.id);
+                const statusTag = hasByeMatch
+                    ? `<span class="bg-emerald-950 text-emerald-400 border border-emerald-800 text-[8px] font-black px-1.5 py-0.5 rounded">부전승 승점+3</span>`
+                    : `<span class="bg-indigo-950 text-indigo-400 border border-indigo-900 text-[8px] font-bold px-1.5 py-0.5 rounded">휴식 대기</span>`;
+
+                return `
+                    <div class="bg-slate-950/70 border border-slate-850/60 p-1.5 rounded-lg flex items-center justify-between text-[11px]">
+                        <div class="overflow-hidden mr-1">
+                            <span class="font-bold text-white block truncate text-xs">${t.name}</span>
+                            <span class="text-[9px] text-slate-400 truncate block">${t.player1} & ${t.player2}</span>
+                        </div>
+                        <div class="shrink-0">
+                            ${statusTag}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // NEXT ROUND MATCHES QUEUE
+        const nextRoundIndex = state.currentRound + 1;
+        const totalRds = Math.max(...state.matches.map(m => m.round), 1);
+        const queueList = document.getElementById('nextMatchesList');
+        const queueTitle = document.getElementById('queueHeaderTitle');
+
+        if (nextRoundIndex > totalRds) {
+            queueTitle.textContent = "최종 라운드 마감";
+            queueList.innerHTML = `
+                <div class="text-center py-6 text-slate-500 text-[11px] font-bold">
+                    <i class="fa-solid fa-trophy text-amber-500 text-lg block mb-1.5 animate-bounce"></i>
+                    모든 라운드 경기가 완료되었습니다!
+                </div>
+            `;
+            return;
+        }
+
+        queueTitle.textContent = `ROUND ${nextRoundIndex} 대진 예정 일정`;
+        const nextMatches = state.matches.filter(m => m.round === nextRoundIndex && !m.isByeMatch);
+
+        if (nextMatches.length === 0) {
+            queueList.innerHTML = `
+                <div class="text-[10px] text-slate-500 italic py-4 text-center">다음 라운드 경기가 없습니다.</div>
+            `;
+            return;
+        }
+
+        queueList.innerHTML = nextMatches.map(m => {
+            const home = getT(m.homeTeamId);
+            const away = getT(m.awayTeamId);
+            return `
+                <div class="bg-slate-950/90 border border-slate-850 rounded-lg p-2">
+                    <div class="flex justify-between text-[8px] text-slate-500 mb-1 font-sports">
+                        <span>COURT ${m.courtNum}</span>
+                        <span>WAITING</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-white font-bold">
+                        <span class="truncate max-w-[45%]">${home.name}</span>
+                        <span class="text-[9px] text-slate-600 font-sports">VS</span>
+                        <span class="truncate max-w-[45%] text-right">${away.name}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function prevRound() {
+        if (state.currentRound > 1) {
+            state.currentRound--;
+            playSound('click');
+            updateDashboard();
+        }
+    }
+
+    function nextRound() {
+        const totalRounds = Math.max(...state.matches.map(m => m.round), 1);
+        if (state.currentRound < totalRounds) {
+            state.currentRound++;
+            playSound('click');
+            updateDashboard();
+        }
+    }
+
+    // --- TIMER MODULES ---
+    function formatTime(sec) {
+        const m = Math.floor(sec / 60).toString().padStart(2, '0');
+        const s = (sec % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function toggleTimer() {
+        const btn = document.getElementById('btnTimerPlay');
+        if (isTimerRunning) {
+            // Pause
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            btn.innerHTML = `<i class="fa-solid fa-play"></i>`;
+            playSound('click');
+        } else {
+            // Start
+            isTimerRunning = true;
+            btn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+            playSound('click');
+            timerInterval = setInterval(() => {
+                if (timerSecondsLeft > 0) {
+                    timerSecondsLeft--;
+                    document.getElementById('gameTimerDisplay').textContent = formatTime(timerSecondsLeft);
+
+                    // Critical countdown alarm color
+                    if (timerSecondsLeft <= 10) {
+                        document.getElementById('gameTimerDisplay').className = "font-sports font-black text-3xl tracking-wider text-rose-500 neon-glow-rose bg-slate-950 px-4 py-1 rounded-xl border border-rose-900";
+                    }
+                } else {
+                    clearInterval(timerInterval);
+                    isTimerRunning = false;
+                    btn.innerHTML = `<i class="fa-solid fa-play"></i>`;
+                    playSound('buzzer');
+                    showToast("경기 종료 피슬 소리가 울렸습니다!", "success");
+
+                    document.getElementById('gameTimerDisplay').className = "font-sports font-black text-3xl tracking-wider text-yellow-400 neon-glow-yellow bg-slate-950 px-4 py-1 rounded-xl border border-slate-850";
+                }
+            }, 1000);
+        }
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        timerSecondsLeft = state.matchTimeLimit;
+
+        document.getElementById('gameTimerDisplay').textContent = formatTime(timerSecondsLeft);
+        document.getElementById('gameTimerDisplay').className = "font-sports font-black text-3xl tracking-wider text-yellow-400 neon-glow-yellow bg-slate-950 px-4 py-1 rounded-xl border border-slate-850";
+        document.getElementById('btnTimerPlay').innerHTML = `<i class="fa-solid fa-play"></i>`;
+
+        playSound('click');
+    }
+
+    function confirmReset() {
+        const modal = document.createElement('div');
+        modal.className = "fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-6";
+        modal.innerHTML = `
+            <div class="bg-slate-900 border-2 border-slate-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl relative text-center">
+                <i class="fa-solid fa-triangle-exclamation text-rose-500 text-4xl mb-3 animate-pulse"></i>
+                <h3 class="text-lg font-black text-white">데이터 초기화 경고</h3>
+                <p class="text-slate-400 text-xs mt-2 mb-5">현재 진행 중인 모든 대진 및 리그 경기 결과가 삭제됩니다.<br>등록된 참가 팀 목록은 그대로 남습니다.</p>
+                <div class="flex gap-3">
+                    <button id="cancelResetBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition-colors">취소</button>
+                    <button id="confirmResetBtn" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-black py-2.5 rounded-xl text-xs transition-all">초기화</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        document.getElementById('cancelResetBtn').onclick = () => {
+            modal.remove();
+            playSound('click');
+        };
+
+        document.getElementById('confirmResetBtn').onclick = () => {
+            modal.remove();
+            state.matches = [];
+            state.drawIndex = 0;
+            state.drawMatches = [];
+            resetTimer();
+            navigateTo('screenSetup');
+            showToast("매치 데이터 및 대진이 원상복구 초기화되었습니다.");
+        };
+    }
+
+    // --- ROBUST LOCAL FILE BACKUP & RECOVERY (.json) ---
+    function saveToFile() {
+        try {
+            const dataPacket = {
+                state: state,
+                currentScreenId: currentScreenId,
+                timerSecondsLeft: timerSecondsLeft
+            };
+            const jsonString = JSON.stringify(dataPacket, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `champions_league_TVBoard_${Date.now()}.json`;
+            link.click();
+
+            URL.revokeObjectURL(link.href);
+            showToast("로컬 컴퓨터 백업 파일(.json) 저장이 완료되었습니다!", "success");
+            playSound('crash');
+        } catch (e) {
+            showToast("백업 파일을 만드는 도중 오류가 발생했습니다.");
+            console.error(e);
+        }
+    }
+
+    function loadFromFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                if (parsed && parsed.state) {
+                    state = parsed.state;
+                    currentScreenId = parsed.currentScreenId || 'screenSetup';
+                    timerSecondsLeft = parsed.timerSecondsLeft !== undefined ? parsed.timerSecondsLeft : state.matchTimeLimit;
+
+                    updateSetupTeamsList();
+                    if (currentScreenId === 'screenDashboard') {
+                        updateDashboard();
+                        document.getElementById('gameTimerDisplay').textContent = formatTime(timerSecondsLeft);
+                    }
+
+                    navigateTo(currentScreenId);
+                    showToast("선택하신 백업 파일로부터 대진표를 완벽 복구했습니다!", "success");
+                    playSound('crash');
+                } else {
+                    showToast("대진표 백업 JSON 형식이 올바르지 않습니다.");
+                }
+            } catch (err) {
+                showToast("불러오기 도중 파일 손상 또는 포맷 에러가 감지되었습니다.");
+                console.error(err);
+            }
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>등고선 탐험대</title>
+  <meta name="description" content="등고선 색칠, 산 모양 찾기, 경사 판단과 보물산 탐험으로 지형을 익히는 활동">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    html { background: #e0f2fe; }
+    body { margin: 0; min-width: 320px; }
+    button { touch-action: manipulation; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef } = React;
+
+const makeIcon = (symbol) => ({ size = 24, className = '', style = {}, ...props }) => (
+  <span
+    className={className}
+    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: size, lineHeight: 1, ...style }}
+    aria-hidden="true"
+    {...props}
+  >
+    {symbol}
+  </span>
+);
+
+const Map = makeIcon('🗺️');
+const Mountain = makeIcon('⛰️');
+const PaintBucket = makeIcon('🎨');
+const ArrowRight = makeIcon('→');
+const CheckCircle2 = makeIcon('✓');
+const XCircle = makeIcon('✕');
+const RotateCcw = makeIcon('↻');
+const Award = makeIcon('🏆');
+const Flag = makeIcon('🚩');
+const Navigation = makeIcon('🧭');
+
+// --- 게임 데이터 및 설정 ---
+const COLORS = {
+  100: { hex: '#86efac', name: '초록색', tw: 'bg-green-300', text: 'text-slate-700' },   // 100m
+  200: { hex: '#fef08a', name: '노란색', tw: 'bg-yellow-300', text: 'text-slate-700' },  // 200m
+  300: { hex: '#fdba74', name: '주황색', tw: 'bg-orange-300', text: 'text-slate-700' },  // 300m
+  400: { hex: '#8b4513', name: '갈색', tw: 'bg-amber-800', text: 'text-white' },         // 400m
+};
+
+function App() {
+  const [gameState, setGameState] = useState('intro'); // intro, stage1, stage2, stage3, bonus, end
+  const score = useRef(0);
+
+  // --- 공통 UI 컴포넌트 ---
+  const TitleHeader = ({ title, icon: Icon, step, isBonus = false }) => (
+    <div className={`bg-white p-4 rounded-2xl shadow-sm mb-6 flex items-center justify-between border-b-4 ${isBonus ? 'border-amber-400' : 'border-blue-200'}`}>
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-xl ${isBonus ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
+          <Icon size={24} />
+        </div>
+        <h2 className="text-xl md:text-2xl font-bold text-gray-800">{title}</h2>
+      </div>
+      <div className={`text-sm font-bold px-3 py-1 rounded-full border ${isBonus ? 'text-amber-600 bg-amber-50 border-amber-200' : 'text-blue-500 bg-blue-50 border-blue-200'}`}>
+        {isBonus ? '보너스 스테이지' : `스테이지 ${step}/3`}
+      </div>
+    </div>
+  );
+
+  // ==========================================
+  // [인트로 화면]
+  // ==========================================
+  if (gameState === 'intro') {
+    return (
+      <div className="min-h-screen bg-sky-100 flex flex-col items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full text-center border-4 border-white border-b-sky-200">
+          <div className="text-6xl mb-4">🏔️🧭</div>
+          <h1 className="text-3xl font-extrabold text-slate-800 mb-2 tracking-tight">
+            등고선 탐험대
+          </h1>
+          <p className="text-slate-600 mb-8 font-medium">
+            지도의 비밀을 풀고 최고의 탐험가가 되어보세요!
+          </p>
+
+          <div className="space-y-3 mb-8 text-left bg-sky-50 p-4 rounded-xl">
+            <p className="text-sm text-slate-700 flex items-center gap-2">
+              <span className="text-lg">🎨</span> 1단계: 등고선 색칠하기
+            </p>
+            <p className="text-sm text-slate-700 flex items-center gap-2">
+              <span className="text-lg">⛰️</span> 2단계: 산의 실제 모습 찾기
+            </p>
+            <p className="text-sm text-slate-700 flex items-center gap-2">
+              <span className="text-lg">🏃</span> 3단계: 가파른 길 찾기
+            </p>
+            <p className="text-sm text-amber-600 font-bold flex items-center gap-2 mt-4 pt-4 border-t border-sky-200">
+              <span className="text-lg">💎</span> 보너스: 보물산 탐험 게임!
+            </p>
+          </div>
+
+          <button
+            onClick={() => setGameState('stage1')}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 transform transition active:scale-95 flex items-center justify-center gap-2"
+          >
+            탐험 시작하기 <ArrowRight size={24} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // [스테이지 1: 등고선 색칠하기]
+  // ==========================================
+  const Stage1 = () => {
+    const [selectedColor, setSelectedColor] = useState(null);
+    const [zoneColors, setZoneColors] = useState({ z100: '#ffffff', z200: '#ffffff', z300: '#ffffff', z400: '#ffffff' });
+    const [showResult, setShowResult] = useState(false);
+    const [isCorrect, setIsCorrect] = useState(false);
+
+    const handleZoneClick = (zoneId) => {
+      if (!selectedColor) return;
+      setZoneColors(prev => ({ ...prev, [zoneId]: selectedColor }));
+    };
+
+    const checkAnswer = () => {
+      const correct =
+        zoneColors.z100 === COLORS[100].hex &&
+        zoneColors.z200 === COLORS[200].hex &&
+        zoneColors.z300 === COLORS[300].hex &&
+        zoneColors.z400 === COLORS[400].hex;
+
+      setIsCorrect(correct);
+      setShowResult(true);
+      if(correct) score.current += 30;
+    };
+
+    return (
+      <div className="min-h-screen bg-sky-50 p-4 pb-24 md:p-8 flex justify-center">
+        <div className="max-w-2xl w-full">
+          <TitleHeader title="등고선 색칠하기" icon={PaintBucket} step={1} />
+
+          <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm mb-6 text-center">
+            <p className="text-base md:text-lg text-slate-700 font-medium mb-4">
+              낮은 곳은 초록색, 높은 곳은 갈색으로 칠해볼까요?<br/>
+              물감을 선택하고 지도를 터치하세요!
+            </p>
+
+            <div className="relative w-full max-w-sm mx-auto aspect-square mb-6 bg-blue-50 rounded-xl border-2 border-dashed border-blue-200 overflow-hidden flex items-center justify-center">
+              <svg viewBox="0 0 400 400" className="w-full h-full drop-shadow-md">
+                <path
+                  d="M 50 200 C 50 50, 350 50, 350 200 C 350 350, 50 350, 50 200 Z"
+                  fill={zoneColors.z100} stroke="#475569" strokeWidth="2"
+                  onClick={() => handleZoneClick('z100')}
+                  className="cursor-pointer hover:opacity-90 transition-opacity"
+                />
+                <text x="70" y="205" fontSize="16" fill="#334155" pointerEvents="none" fontWeight="bold">100m</text>
+
+                <path
+                  d="M 100 200 C 100 100, 300 100, 300 200 C 300 300, 100 300, 100 200 Z"
+                  fill={zoneColors.z200} stroke="#475569" strokeWidth="2"
+                  onClick={() => handleZoneClick('z200')}
+                  className="cursor-pointer hover:opacity-90 transition-opacity"
+                />
+                <text x="120" y="205" fontSize="16" fill="#334155" pointerEvents="none" fontWeight="bold">200m</text>
+
+                <path
+                  d="M 150 200 C 150 140, 270 140, 270 200 C 270 260, 150 260, 150 200 Z"
+                  fill={zoneColors.z300} stroke="#475569" strokeWidth="2"
+                  onClick={() => handleZoneClick('z300')}
+                  className="cursor-pointer hover:opacity-90 transition-opacity"
+                />
+                <text x="165" y="205" fontSize="16" fill="#334155" pointerEvents="none" fontWeight="bold">300m</text>
+
+                <path
+                  d="M 190 200 C 190 170, 240 170, 240 200 C 240 230, 190 230, 190 200 Z"
+                  fill={zoneColors.z400} stroke="#475569" strokeWidth="2"
+                  onClick={() => handleZoneClick('z400')}
+                  className="cursor-pointer hover:opacity-90 transition-opacity"
+                />
+                <text x="200" y="205" fontSize="14" fill="#334155" pointerEvents="none" fontWeight="bold">400m</text>
+              </svg>
+            </div>
+
+            <div className="flex justify-center gap-2 md:gap-4 mb-6">
+              {Object.entries(COLORS).map(([height, colorInfo]) => (
+                <button
+                  key={height}
+                  onClick={() => setSelectedColor(colorInfo.hex)}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border-4 transition-transform ${
+                    selectedColor === colorInfo.hex ? 'border-blue-500 scale-110' : 'border-transparent hover:scale-105'
+                  }`}
+                >
+                  <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${colorInfo.tw} border-2 border-slate-300 shadow-inner`} style={{ backgroundColor: colorInfo.hex }} />
+                  <span className="text-xs font-bold text-slate-600">{height}m</span>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={checkAnswer}
+              className="bg-indigo-500 text-white px-8 py-3 rounded-xl font-bold text-lg hover:bg-indigo-600 active:scale-95 shadow-md"
+            >
+              다 칠했어요! 확인하기
+            </button>
+          </div>
+
+          {showResult && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center animate-bounce-in">
+                {isCorrect ? (
+                  <>
+                    <CheckCircle2 size={64} className="text-green-500 mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold text-slate-800 mb-2">참 잘했어요! 🎉</h3>
+                    <p className="text-slate-600 mb-6">규칙에 맞게 예쁘게 색칠했네요!</p>
+                    <button
+                      onClick={() => setGameState('stage2')}
+                      className="w-full bg-blue-500 text-white py-3 rounded-xl font-bold text-lg active:scale-95"
+                    >
+                      다음 단계로
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <XCircle size={64} className="text-orange-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">아쉽네요!</h3>
+                    <p className="text-slate-600 mb-6 text-sm">
+                      가장 낮은 100m는 초록색, 높아질수록 노란색, 주황색, 갈색 순서로 칠해야 해요.
+                    </p>
+                    <button
+                      onClick={() => setShowResult(false)}
+                      className="w-full bg-orange-100 text-orange-600 py-3 rounded-xl font-bold text-lg active:scale-95"
+                    >
+                      다시 해볼게요
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ==========================================
+  // [스테이지 2: 단면도 짝맞추기]
+  // ==========================================
+  const Stage2 = () => {
+    const [questionIdx, setQuestionIdx] = useState(0);
+    const [showResult, setShowResult] = useState(false);
+    const [isCorrect, setIsCorrect] = useState(false);
+
+    const questions = [
+      {
+        id: 1,
+        title: "이 등고선 지도를 옆에서 보면 어떤 산 모양일까요?",
+        mapSvg: (
+          <svg viewBox="0 0 200 200" className="w-full h-full">
+            <ellipse cx="100" cy="100" rx="80" ry="60" fill="#a7f3d0" stroke="#475569" />
+            <ellipse cx="100" cy="100" rx="60" ry="45" fill="#fef08a" stroke="#475569" />
+            <ellipse cx="100" cy="100" rx="40" ry="30" fill="#fb923c" stroke="#475569" />
+            <ellipse cx="100" cy="100" rx="20" ry="15" fill="#8b4513" stroke="#475569" />
+          </svg>
+        ),
+        options: [
+          { id: 'wrong1', type: 'double', path: "M 10 180 Q 50 50 100 150 Q 150 50 190 180 Z" },
+          { id: 'correct', type: 'single', path: "M 20 180 Q 100 20 180 180 Z" },
+        ],
+        correctId: 'correct'
+      },
+      {
+        id: 2,
+        title: "봉우리가 두 개인 이 지도는 어떤 단면도를 가질까요?",
+        mapSvg: (
+          <svg viewBox="0 0 200 200" className="w-full h-full">
+            <path d="M 30 100 Q 100 20 170 100 Q 100 180 30 100 Z" fill="#a7f3d0" stroke="#475569" />
+            <path d="M 50 100 Q 100 50 150 100 Q 100 150 50 100 Z" fill="#fef08a" stroke="#475569" />
+            <circle cx="75" cy="100" r="15" fill="#fb923c" stroke="#475569" />
+            <circle cx="125" cy="100" r="15" fill="#fb923c" stroke="#475569" />
+          </svg>
+        ),
+        options: [
+          { id: 'correct', type: 'double', path: "M 10 180 Q 60 50 100 120 Q 140 50 190 180 Z" },
+          { id: 'wrong2', type: 'single_flat', path: "M 20 180 Q 100 100 180 180 Z" },
+        ],
+        correctId: 'correct'
+      }
+    ];
+
+    const currentQ = questions[questionIdx];
+
+    const handleOptionSelect = (optId) => {
+      const correct = optId === currentQ.correctId;
+      setIsCorrect(correct);
+      setShowResult(true);
+      if(correct) score.current += 35;
+    };
+
+    const nextAction = () => {
+      setShowResult(false);
+      if (isCorrect) {
+        if (questionIdx < questions.length - 1) {
+          setQuestionIdx(questionIdx + 1);
+        } else {
+          setGameState('stage3');
+        }
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-sky-50 p-4 pb-24 md:p-8 flex justify-center">
+        <div className="max-w-2xl w-full">
+          <TitleHeader title="산의 실제 모습 찾기" icon={Mountain} step={2} />
+
+          <div className="bg-white p-6 rounded-2xl shadow-sm mb-6 flex flex-col items-center">
+            <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-6 text-center">
+              {currentQ.title}
+            </h3>
+
+            <div className="w-48 h-48 md:w-64 md:h-64 bg-slate-50 rounded-xl border border-slate-200 p-4 mb-8 relative">
+              <span className="absolute top-2 left-2 bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded">평면도</span>
+              {currentQ.mapSvg}
+            </div>
+
+            <div className="w-full">
+              <span className="block text-center text-sm font-bold text-slate-500 mb-4">알맞은 단면도를 선택하세요!</span>
+              <div className="grid grid-cols-2 gap-4">
+                {currentQ.options.map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => handleOptionSelect(opt.id)}
+                    className="bg-white border-4 border-slate-100 rounded-xl p-4 hover:border-blue-400 hover:bg-blue-50 transition-all active:scale-95 flex flex-col items-center"
+                  >
+                    <svg viewBox="0 0 200 200" className="w-full aspect-square">
+                      <line x1="0" y1="180" x2="200" y2="180" stroke="#cbd5e1" strokeWidth="2" />
+                      <line x1="0" y1="130" x2="200" y2="130" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4" />
+                      <line x1="0" y1="80" x2="200" y2="80" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="4" />
+                      <path d={opt.path} fill="#86efac" stroke="#15803d" strokeWidth="3" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {showResult && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center">
+                {isCorrect ? (
+                  <>
+                    <CheckCircle2 size={64} className="text-green-500 mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold text-slate-800 mb-2">정답이에요! 👏</h3>
+                    <p className="text-slate-600 mb-6">
+                      {currentQ.id === 1 ? '안쪽으로 갈수록 높아지는 봉우리네요.' : '쌍봉우리가 되어요.'}
+                    </p>
+                    <button
+                      onClick={nextAction}
+                      className="w-full bg-blue-500 text-white py-3 rounded-xl font-bold text-lg"
+                    >
+                      {questionIdx < questions.length - 1 ? '다음 문제' : '다음 단계로'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <XCircle size={64} className="text-orange-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">다시 볼까요?</h3>
+                    <p className="text-slate-600 mb-6 text-sm">
+                      제일 안쪽 원(제일 높은 곳)이 몇 개인지 확인해보세요!
+                    </p>
+                    <button
+                      onClick={nextAction}
+                      className="w-full bg-orange-100 text-orange-600 py-3 rounded-xl font-bold text-lg"
+                    >
+                      다시 해볼게요
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ==========================================
+  // [스테이지 3: 퀴즈 (간격과 경사)]
+  // ==========================================
+  const Stage3 = () => {
+    const [showResult, setShowResult] = useState(false);
+    const [isCorrect, setIsCorrect] = useState(false);
+
+    const handleAnswer = (isSteep) => {
+      const correct = isSteep === true;
+      setIsCorrect(correct);
+      setShowResult(true);
+      if(correct) score.current += 35;
+    };
+
+    return (
+      <div className="min-h-screen bg-sky-50 p-4 pb-24 md:p-8 flex justify-center">
+        <div className="max-w-2xl w-full">
+          <TitleHeader title="가파른 길 찾기" icon={Map} step={3} />
+
+          <div className="bg-white p-6 rounded-2xl shadow-sm mb-6 flex flex-col items-center">
+             <p className="text-slate-700 font-bold mb-4 bg-yellow-100 px-4 py-2 rounded-full text-sm">
+              정상으로 가는 두 가지 길이 있습니다.
+            </p>
+            <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-6 text-center">
+              등산하기 더 <span className="text-red-500 underline decoration-red-300 decoration-4">가파르고 힘든 길</span>은 어디일까요?
+            </h3>
+
+            <div className="w-full max-w-sm aspect-video bg-blue-50 rounded-xl border-2 border-slate-200 mb-8 relative overflow-hidden flex items-center justify-center">
+              <svg viewBox="0 0 400 200" className="w-full h-full">
+                <ellipse cx="200" cy="100" rx="180" ry="80" fill="#a7f3d0" stroke="#475569" strokeWidth="1"/>
+                <ellipse cx="180" cy="100" rx="140" ry="60" fill="#fef08a" stroke="#475569" strokeWidth="1"/>
+                <ellipse cx="160" cy="100" rx="100" ry="40" fill="#fb923c" stroke="#475569" strokeWidth="1"/>
+                <ellipse cx="140" cy="100" rx="60" ry="20" fill="#8b4513" stroke="#475569" strokeWidth="1"/>
+
+                <polygon points="140,90 135,100 145,100" fill="white" />
+                <text x="135" y="85" fontSize="12" fill="white" fontWeight="bold">정상</text>
+
+                <path d="M 40 100 L 140 100" stroke="#ef4444" strokeWidth="4" strokeDasharray="6" fill="none" />
+                <circle cx="40" cy="100" r="10" fill="#ef4444" />
+                <text x="35" y="105" fontSize="14" fill="white" fontWeight="bold">가</text>
+
+                <path d="M 360 100 L 140 100" stroke="#3b82f6" strokeWidth="4" strokeDasharray="6" fill="none" />
+                <circle cx="360" cy="100" r="10" fill="#3b82f6" />
+                <text x="355" y="105" fontSize="14" fill="white" fontWeight="bold">나</text>
+              </svg>
+            </div>
+
+            <div className="flex gap-4 w-full">
+              <button
+                onClick={() => handleAnswer(true)}
+                className="flex-1 bg-red-50 hover:bg-red-100 border-2 border-red-200 text-red-700 py-4 rounded-xl font-bold text-lg transition-colors"
+              >
+                🔴 '가' 길<br/>
+                <span className="text-sm font-normal">(등고선이 모여 있어요)</span>
+              </button>
+              <button
+                onClick={() => handleAnswer(false)}
+                className="flex-1 bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 text-blue-700 py-4 rounded-xl font-bold text-lg transition-colors"
+              >
+                🔵 '나' 길<br/>
+                <span className="text-sm font-normal">(등고선이 넓게 퍼져 있어요)</span>
+              </button>
+            </div>
+          </div>
+
+          {showResult && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center">
+                {isCorrect ? (
+                  <>
+                    <CheckCircle2 size={64} className="text-green-500 mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold text-slate-800 mb-2">훌륭해요! 💯</h3>
+                    <p className="text-slate-600 mb-6 bg-green-50 p-3 rounded-lg text-sm">
+                      등고선 사이의 간격이 <strong>좁을수록 가파른 곳</strong>이고,
+                      간격이 <strong>넓을수록 완만한 곳</strong>이랍니다!
+                    </p>
+                    <button
+                      onClick={() => setGameState('bonus')}
+                      className="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2"
+                    >
+                      보너스 게임 하러 가기 <Navigation size={20} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <XCircle size={64} className="text-orange-500 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">헷갈릴 수 있어요!</h3>
+                    <p className="text-slate-600 mb-6 text-sm">
+                      선들이 촘촘하게 모여있다는 것은 좁은 거리 안에서 높이가 빠르게 변한다는 뜻이에요. 즉 가파르다는 뜻이죠!
+                    </p>
+                    <button
+                      onClick={() => setShowResult(false)}
+                      className="w-full bg-orange-100 text-orange-600 py-3 rounded-xl font-bold text-lg"
+                    >
+                      다시 선택하기
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ==========================================
+  // [보너스 스테이지: 보물산 레이싱]
+  // ==========================================
+  const BonusGame = () => {
+    // 5x5 등고선 맵 (숫자는 높이)
+    const GRID = [
+      [300, 200, 200, 300, 400],
+      [300, 300, 400, 100, 400],
+      [100, 200, 400, 100, 300],
+      [200, 100, 100, 200, 200],
+      [100, 100, 300, 100, 100]
+    ];
+
+    const [pos, setPos] = useState({ x: 0, y: 4 }); // 시작점 (4행 0열)
+    const [msg, setMsg] = useState("인접한 칸을 터치하여 정상(400m)으로 이동하세요!");
+    const [isError, setIsError] = useState(false);
+    const [isWon, setIsWon] = useState(false);
+
+    const handleCellClick = (x, y) => {
+      if (isWon) return;
+
+      // 상하좌우 1칸만 이동 가능
+      const isAdjacent = Math.abs(x - pos.x) + Math.abs(y - pos.y) === 1;
+      if (!isAdjacent) return;
+
+      const currentHeight = GRID[pos.y][pos.x];
+      const targetHeight = GRID[y][x];
+
+      // 높이 차이가 100m를 초과하면 절벽으로 간주하여 이동 불가
+      if (Math.abs(targetHeight - currentHeight) > 100) {
+        setIsError(true);
+        setMsg("앗! 절벽이에요! 한 번에 200m 이상 오르거나 내릴 수 없어요.");
+        setTimeout(() => setIsError(false), 1500);
+        return;
+      }
+
+      // 이동 성공
+      setPos({ x, y });
+      setMsg(`${targetHeight}m 지점으로 이동했습니다!`);
+      setIsError(false);
+
+      // 도착 확인 (0행 4열 400m)
+      if (x === 4 && y === 0) {
+        setIsWon(true);
+        setMsg("정상 도착! 완만한 길을 아주 잘 찾았어요!");
+        setTimeout(() => setGameState('end'), 2500);
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-amber-50 p-4 pb-24 md:p-8 flex justify-center">
+        <div className="max-w-2xl w-full">
+          <TitleHeader title="안전한 등산로 개척하기" icon={Flag} isBonus={true} />
+
+          <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm mb-6 flex flex-col items-center">
+            <div className={`w-full p-3 rounded-xl text-center mb-6 font-bold text-sm md:text-base transition-colors ${isWon ? 'bg-green-100 text-green-700' : isError ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-blue-50 text-blue-700'}`}>
+              {msg}
+            </div>
+
+            {/* 범례 */}
+            <div className="flex gap-2 mb-4 text-xs font-bold w-full justify-center">
+              <span className="bg-green-300 text-slate-700 px-2 py-1 rounded">100m</span>
+              <span className="bg-yellow-300 text-slate-700 px-2 py-1 rounded">200m</span>
+              <span className="bg-orange-300 text-slate-700 px-2 py-1 rounded">300m</span>
+              <span className="bg-amber-800 text-white px-2 py-1 rounded">400m</span>
+            </div>
+
+            {/* 게임 보드 */}
+            <div className={`grid grid-cols-5 gap-1 md:gap-2 p-2 bg-slate-200 rounded-xl w-full max-w-sm aspect-square ${isError ? 'animate-shake' : ''}`}>
+              {GRID.map((row, y) =>
+                row.map((height, x) => {
+                  const isPlayerHere = pos.x === x && pos.y === y;
+                  const isGoal = x === 4 && y === 0;
+                  const isStart = x === 0 && y === 4;
+                  const isAdjacent = Math.abs(x - pos.x) + Math.abs(y - pos.y) === 1;
+
+                  return (
+                    <button
+                      key={`${x}-${y}`}
+                      onClick={() => handleCellClick(x, y)}
+                      className={`relative flex items-center justify-center rounded-lg shadow-sm font-bold text-xs md:text-sm transition-transform ${COLORS[height].tw} ${COLORS[height].text} ${isAdjacent && !isWon ? 'ring-4 ring-blue-400 z-10 hover:scale-105' : 'opacity-90'}`}
+                      style={{ height: '100%' }}
+                    >
+                      <span className="absolute top-1 left-1 opacity-60 text-[10px] hidden md:block">{height}</span>
+
+                      {isPlayerHere && <span className="text-2xl md:text-3xl drop-shadow-md z-20">🏃</span>}
+                      {isGoal && !isPlayerHere && <span className="text-2xl md:text-3xl drop-shadow-md opacity-80">🚩</span>}
+                      {isStart && !isPlayerHere && <span className="text-xs md:text-sm font-black opacity-50">출발</span>}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            <p className="mt-6 text-sm text-slate-500 text-center bg-slate-50 p-3 rounded-lg border border-slate-100">
+              💡 <strong>힌트:</strong> 등고선 간격이 좁은 곳(색이 갑자기 변하는 곳)은 절벽입니다. 같은 색이거나 한 단계 위/아래의 색깔인 칸으로만 차근차근 이동하세요!
+            </p>
+          </div>
+        </div>
+
+        {/* CSS for Shake Animation */}
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+          }
+          .animate-shake { animation: shake 0.2s ease-in-out 2; }
+        `}} />
+      </div>
+    );
+  };
+
+  // ==========================================
+  // [엔딩 화면]
+  // ==========================================
+  if (gameState === 'end') {
+    return (
+      <div className="min-h-screen bg-indigo-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full text-center border-t-8 border-indigo-400 relative overflow-hidden">
+
+          <Award size={80} className="text-yellow-400 mx-auto mb-4 drop-shadow-md" />
+
+          <h1 className="text-3xl font-extrabold text-slate-800 mb-2">
+            최고의 탐험가!
+          </h1>
+          <p className="text-slate-600 mb-6 font-medium">
+            위험한 절벽을 피하고 안전하게 정상에 올랐어요!
+          </p>
+
+          <div className="bg-indigo-50 rounded-2xl p-6 mb-8">
+            <h3 className="font-bold text-indigo-800 mb-4">탐험 노트 정리 📝</h3>
+            <ul className="text-left text-sm text-indigo-900 space-y-3 font-medium">
+              <li>✅ <strong>등고선</strong>은 높이가 같은 곳을 연결한 선이에요.</li>
+              <li>✅ 색깔로 땅의 높낮이를 한눈에 알 수 있어요.</li>
+              <li>✅ 선이 <strong>좁으면 가파르고</strong>, <strong>넓으면 완만해요</strong>.</li>
+            </ul>
+          </div>
+
+          <button
+            onClick={() => {
+              score.current = 0;
+              setGameState('intro');
+            }}
+            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-md transform transition active:scale-95 flex items-center justify-center gap-2"
+          >
+            <RotateCcw size={20} /> 처음부터 다시하기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 게임 스테이지 라우팅
+  return (
+    <div className="font-sans text-slate-800 selection:bg-blue-200">
+      {gameState === 'stage1' && <Stage1 />}
+      {gameState === 'stage2' && <Stage2 />}
+      {gameState === 'stage3' && <Stage3 />}
+      {gameState === 'bonus' && <BonusGame />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
